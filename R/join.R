@@ -20,6 +20,9 @@
 #' df1 %>% dt_full_join(df2)
 #' df1 %>% dt_anti_join(df2)
 dt_left_join <- function(x, y, by = NULL) {
+  if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
+  if (!is.data.table(x)) x <- as.data.table(x)
+  if (!is.data.table(y)) y <- as.data.table(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -29,12 +32,17 @@ dt_left_join <- function(x, y, by = NULL) {
   on_vec <- by_x
   names(on_vec) <- by_y
 
-  y[x, on = on_vec, allow.cartesian = TRUE]
+  all_names <- c(names(x), setdiff(names(y), names(x)))
+
+  y[x, on = on_vec, allow.cartesian = TRUE][, ..all_names]
 }
 
 #' @export
 #' @rdname dt_left_join
 dt_inner_join <- function(x, y, by = NULL) {
+  if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
+  if (!is.data.table(x)) x <- as.data.table(x)
+  if (!is.data.table(y)) y <- as.data.table(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -50,6 +58,9 @@ dt_inner_join <- function(x, y, by = NULL) {
 #' @export
 #' @rdname dt_left_join
 dt_right_join <- function(x, y, by = NULL) {
+  if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
+  if (!is.data.table(x)) x <- as.data.table(x)
+  if (!is.data.table(y)) y <- as.data.table(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -72,6 +83,9 @@ dt_full_join <- function(x, y, by = NULL, suffix = c(".x", ".y")) {
 #' @export
 #' @rdname dt_left_join
 dt_anti_join <- function(x, y, by = NULL) {
+  if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
+  if (!is.data.table(x)) x <- as.data.table(x)
+  if (!is.data.table(y)) y <- as.data.table(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -85,9 +99,6 @@ dt_anti_join <- function(x, y, by = NULL) {
 }
 
 get_bys <- function(x, y, by) {
-  if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
 
   if (is.null(by)) {
     by_x <- by_y <- intersect(colnames(x), colnames(y))
@@ -110,15 +121,10 @@ join_mold <- function(x, y, by = NULL, suffix = c(".x", ".y"), all_x, all_y) {
   if (!is.data.table(x)) x <- as.data.table(x)
   if (!is.data.table(y)) y <- as.data.table(y)
 
-  if (is.null(by)) {
-    by_x <- by_y <- intersect(colnames(x), colnames(y))
-  } else {
-    by_x <- names(by)
-    by_y <- unname(by)
-    if (is.null(by_x)) {
-      by_x <- by_y
-    }
-  }
+  by_x_y <- get_bys(x, y, by)
+
+  by_x <- by_x_y[[1]]
+  by_y <- by_x_y[[2]]
 
   if (by_x %notin% colnames(x)) stop("by.x columns not in x")
   if (by_y %notin% colnames(y)) stop("by.y columns not in y")

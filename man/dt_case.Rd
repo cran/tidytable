@@ -11,9 +11,6 @@ dt_case(..., default = NA)
 
 \item{default}{Default value. Set to NA. Argument must be named.}
 }
-\value{
-A vector
-}
 \description{
 This function allows you to use multiple if/else statements in one call.
 Note that this function is called differently than `dplyr::case_when`! See examples
@@ -28,12 +25,10 @@ test_df <- data.table::data.table(
   d = c(rep("a", 4), rep("b", 6)))
 
 test_df \%>\%
-  as_dt() \%>\%
   dt_mutate(x = dt_case(b < 13, 3,
                         a > 4, 2,
                         default = 10))
 test_df \%>\%
-  as_dt() \%>\%
   dt_mutate(x = dt_case(c == "a","a",
                         default = d))
 }

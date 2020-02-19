@@ -5,7 +5,7 @@
 \title{Pipeable data.table call}
 \usage{
 dt(
-  x,
+  .data,
   i,
   j,
   by,
@@ -25,7 +25,7 @@ dt(
 )
 }
 \arguments{
-\item{x}{See ?data.table:::`[.data.table`}
+\item{.data}{A data.frame or data.table}
 
 \item{i}{See ?data.table:::`[.data.table`}
 
@@ -56,8 +56,6 @@ dt(
 \item{drop}{See ?data.table:::`[.data.table`}
 
 \item{on}{See ?data.table:::`[.data.table`}
-
-\item{...}{See ?data.table:::`[.data.table`}
 }
 \description{
 Pipeable data.table call
@@ -69,7 +67,6 @@ example_dt <- data.table::data.table(
   z = c("a", "a", "b"))
 
 example_dt \%>\%
-  as_dt() \%>\%
   dt(, ':='(double_x = x * 2)) \%>\%
   dt(order(-double_x))
 }

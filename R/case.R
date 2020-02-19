@@ -7,7 +7,6 @@
 #' @param ... Sequence of condition/value designations
 #' @param default Default value. Set to NA. Argument must be named.
 #'
-#' @return A vector
 #' @export
 #'
 #' @examples
@@ -20,12 +19,10 @@
 #'   d = c(rep("a", 4), rep("b", 6)))
 #'
 #' test_df %>%
-#'   as_dt() %>%
 #'   dt_mutate(x = dt_case(b < 13, 3,
 #'                         a > 4, 2,
 #'                         default = 10))
 #' test_df %>%
-#'   as_dt() %>%
 #'   dt_mutate(x = dt_case(c == "a","a",
 #'                         default = d))
 dt_case <- function(..., default = NA) {

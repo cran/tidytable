@@ -8,7 +8,6 @@
 #' @param .data A data.frame or data.table
 #' @param ... Optional: Bare column names to group by
 #'
-#' @return A data.table
 #' @export
 #' @md
 #'
@@ -33,7 +32,7 @@ dt_count <- function(.data, ...) {
   dots <- enexprs(...)
 
   if (length(dots) == 0) {
-    .data[, list(N = .N), .N]
+    .data[, list(N = .N)]
   } else {
     by_vec <- dots_selector(.data, ...) %>%
       as.character()

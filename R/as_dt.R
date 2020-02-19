@@ -1,14 +1,11 @@
-#' Safely work with data.tables
+#' as_dt() helper
 #'
 #' @description
-#' Copies a data.table so you can "safely" work on it or converts a data.frame to a data.table.
+#' Prevents modify-by-reference/converts a data.frame to a data.table.
 #'
 #' @param .data A data.frame or data.table
-#'
-#' @return A data.table
 #' @export
 #'
-#' @import data.table
 #' @examples
 #' example_df <- data.frame(x = 1:10)
 #'
@@ -17,7 +14,7 @@
 #'   dt_mutate(double_x = x * 2)
 as_dt <- function(.data) {
   if (is.data.table(.data)) {
-    copy(.data)
+    shallow(.data)
   } else {
     as.data.table(.data)
   }

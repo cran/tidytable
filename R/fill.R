@@ -7,8 +7,6 @@
 #' @param ... A selection of bare columns
 #' @param .direction Direction in which to fill missing values. Currently "down" (the default), "up", "downup" (first down then up), or "updown" (first up and then down)
 #' @param by Whether the filling should be done by group. Passed in a `list()`
-#'
-#' @return A data.table
 #' @export
 #' @md
 #'
@@ -23,8 +21,6 @@
 #'
 #' test_df %>%
 #'   dt_fill(x, y, by = z, .direction = "downup")
-#'
-
 dt_fill <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
   if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
   if (!is.data.table(.data)) .data <- as.data.table(.data)
@@ -49,8 +45,6 @@ dt_fill <- function(.data, ..., .direction = c("down", "up", "downup", "updown")
 }
 
 filldown <- function(.data, ..., by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
 
   dots <- dots_selector(.data, ...)
   by <- enexpr(by)
@@ -59,16 +53,17 @@ filldown <- function(.data, ..., by = NULL) {
     dot_type <- eval_tidy(expr(class('$'(.data, !!dot))))
 
     if (dot_type %in% c("integer", "double", "numeric")) {
-      .data %>%
+      .data <- .data %>%
         dt_mutate(!!dot := nafill(!!dot, type = "locf"), by = !!by)
     } else if (dot_type %in% c("character", "logical", "factor")) {
-      eval_tidy(expr(
-        .data[, ':='(na_index = 1:.N), by = !!by] %>%
+      .data <- eval_tidy(expr(
+        .data %>%
+          dt_mutate(na_index = 1:.N, by = !!by) %>%
           dt_mutate(na_index = fifelse(is.na(!!dot), NA_integer_, na_index)) %>%
           dt_mutate(na_index = nafill(na_index, type = "locf"), by = !!by) %>%
-          .[, !!dot := .SD[, !!dot][na_index], by = !!by] %>%
-          .[, na_index := NULL] %>%
-          .[]
+          dt(, !!dot := .SD[, !!dot][na_index], by = !!by) %>%
+          dt(, na_index := NULL) %>%
+          dt()
       ))
     }
   }
@@ -76,8 +71,6 @@ filldown <- function(.data, ..., by = NULL) {
 }
 
 fillup <- function(.data, ..., by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
 
   dots <- dots_selector(.data, ...)
   by <- enexpr(by)
@@ -86,16 +79,17 @@ fillup <- function(.data, ..., by = NULL) {
     dot_type <- eval_tidy(expr(class('$'(.data, !!dot))))
 
     if (dot_type %in% c("integer", "double", "numeric")) {
-      .data %>%
+      .data <- .data %>%
         dt_mutate(!!dot := nafill(!!dot, type = "nocb"), by = !!by)
     } else if (dot_type %in% c("character", "logical", "factor")) {
-      eval_tidy(expr(
-        .data[, ':='(na_index = 1:.N), by = !!by] %>%
+      .data <- eval_tidy(expr(
+        .data %>%
+          dt_mutate(na_index = 1:.N, by = !!by) %>%
           dt_mutate(na_index = fifelse(is.na(!!dot), NA_integer_, na_index)) %>%
           dt_mutate(na_index = nafill(na_index, type = "nocb"), by = !!by) %>%
-          .[, !!dot := .SD[, !!dot][na_index], by = !!by] %>%
-          .[, na_index := NULL] %>%
-          .[]
+          dt(, !!dot := .SD[, !!dot][na_index], by = !!by) %>%
+          dt(, na_index := NULL) %>%
+          dt()
       ))
     }
   }

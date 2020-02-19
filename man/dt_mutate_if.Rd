@@ -5,15 +5,15 @@
 \alias{dt_mutate_at}
 \alias{dt_mutate_across}
 \alias{dt_mutate_all}
-\title{Mutate}
+\title{Mutate variants}
 \usage{
-dt_mutate_if(.data, .predicate, .funs, ...)
+dt_mutate_if(.data, .predicate, .funs, ..., by = NULL)
 
-dt_mutate_at(.data, .vars, .funs, ...)
+dt_mutate_at(.data, .vars, .funs, ..., by = NULL)
 
-dt_mutate_across(.data, .cols, .funs, ...)
+dt_mutate_across(.data, .cols, .funs, ..., by = NULL)
 
-dt_mutate_all(.data, .funs, ...)
+dt_mutate_all(.data, .funs, ..., by = NULL)
 }
 \arguments{
 \item{.data}{A data.frame or data.table}
@@ -24,12 +24,11 @@ dt_mutate_all(.data, .funs, ...)
 
 \item{...}{Other arguments for the passed function}
 
+\item{by}{A single unquoted column or a \code{list()} of columns to group by.}
+
 \item{.vars}{vector \code{c()} of bare column names for \code{dt_mutate_at()} to use}
 
 \item{.cols}{vector \code{c()} of bare column names for \code{dt_mutate_across()} to use}
-}
-\value{
-A data.table
 }
 \description{
 Edit existing columns. Supports enhanced selection.
@@ -49,14 +48,11 @@ example_dt <- data.table::data.table(
   z = c("a", "a", "b"))
 
 example_dt \%>\%
-  as_dt() \%>\%
   dt_mutate_across(is.numeric, as.character)
 
 example_dt \%>\%
-  as_dt() \%>\%
   dt_mutate_across(c(x, y), ~ .x * 2)
 
 example_dt \%>\%
-  as_dt() \%>\%
   dt_mutate_across(c(x, y), list(new = ~ .x * 2))
 }
