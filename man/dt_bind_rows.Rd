@@ -5,14 +5,12 @@
 \alias{dt_bind_cols}
 \title{Bind data.tables by row and column}
 \usage{
-dt_bind_rows(.data, ..., .id = NULL)
+dt_bind_rows(..., .id = NULL)
 
-dt_bind_cols(.data, ...)
+dt_bind_cols(...)
 }
 \arguments{
-\item{.data}{A data.table to bind, or a list of data.tables}
-
-\item{...}{Data frames to bind}
+\item{...}{data.tables or data.frames to bind}
 
 \item{.id}{If TRUE, an integer column is made as a group id}
 }

@@ -9,7 +9,6 @@
 #' @param by `list()` of bare column names to group by
 #'
 #' @md
-#' @return A data.table
 #' @export
 #'
 #' @examples
@@ -24,20 +23,33 @@
 #' example_dt %>%
 #'   dt_top_n(2, wt = y, by = z)
 dt_top_n <- function(.data, n = 5, wt = NULL, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_top_n")
+}
 
-  if (!is.numeric(n) | length(n) > 1) stop("n must be a single number")
+#' @export
+dt_top_n.tidytable <- function(.data, n = 5, wt = NULL, by = NULL) {
 
+  n <- enexpr(n)
   wt <- enexpr(wt)
   by <- enexpr(by)
 
   if (is.null(wt)) {
     .data %>%
-      dt_slice(1:n, !!by)
+      dt_slice_head(!!n, !!by)
   } else {
     .data %>%
-      dt_arrange(-!!wt) %>%
-      dt_slice(1:n, !!by)
+      dt_slice_max(order_by = !!wt, n = !!n, by = !!by)
   }
 }
+
+#' @export
+dt_top_n.data.frame <- function(.data, n = 5, wt = NULL, by = NULL) {
+
+  .data <- as_tidytable(.data)
+  n < enexpr(n)
+  wt <- enexpr(wt)
+  by <- enexpr(by)
+
+  dt_top_n(.data, !!n, wt = !!wt, by = !!by)
+}
+

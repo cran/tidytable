@@ -26,19 +26,30 @@
 #' example_df %>%
 #'   dt_count(is.character)
 dt_count <- function(.data, ...) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_count")
+}
+
+#' @export
+dt_count.tidytable <- function(.data, ...) {
 
   dots <- enexprs(...)
 
   if (length(dots) == 0) {
-    .data[, list(N = .N)]
+    .data <- .data[, list(N = .N)]
   } else {
     by_vec <- dots_selector(.data, ...) %>%
       as.character()
 
-    eval_tidy(expr(
-      .data[, .N, by = by_vec]
+  .data <- eval_tidy(expr(
+    .data[, .N, by = by_vec]
     ))
   }
+  .data
+}
+
+#' @export
+dt_count.data.frame <- function(.data, ...) {
+  .data <- as_tidytable(.data)
+
+  dt_count(.data, ...)
 }

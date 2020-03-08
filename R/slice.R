@@ -8,8 +8,6 @@
 #' @param n Number of rows to grab
 #' @param by A single unquoted column, or a `list()` of columns to group by.
 #'
-#' @return data.table
-#' @import data.table
 #' @export
 #' @md
 #'
@@ -37,12 +35,13 @@
 #' example_dt %>%
 #'   dt_slice_min(order_by = y, by = z)
 dt_slice <- function(.data, rows = 1:5, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_slice")
+}
 
-  if (!is.numeric(rows)) stop("rows must be a numeric vector")
+#' @export
+dt_slice.tidytable <- function(.data, rows = 1:5, by = NULL) {
 
-  rows <- enexpr(rows)
+  rows <- enexpr(rows) # Needed so 1:.N works
   by <- enexpr(by)
 
   if (is.null(by)) {
@@ -57,67 +56,107 @@ dt_slice <- function(.data, rows = 1:5, by = NULL) {
 }
 
 #' @export
+dt_slice.data.frame <- function(.data, rows = 1:5, by = NULL) {
+
+  .data <- as_tidytable(.data)
+  rows <- enexpr(rows)
+  by <- enexpr(by)
+
+  dt_slice(.data, rows = !!rows, by = !!by)
+}
+
+#' @export
 #' @rdname dt_slice
 dt_slice_head <- function(.data, n = 5, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_slice_head")
+}
 
-  if (!is.numeric(n) | length(n) > 1) stop("n must be a single number")
+#' @export
+dt_slice_head.tidytable <- function(.data, n = 5, by = NULL) {
 
+  n <- enexpr(n)
   by <- enexpr(by)
 
   eval_tidy(expr(
-    .data[, head(.SD, n), !!by]
+    .data[, head(.SD, !!n), !!by]
   ))
+}
+
+#' @export
+dt_slice_head.data.frame <- function(.data, n = 5, by = NULL) {
+
+  .data <- as_tidytable(.data)
+  n <- enexpr(n)
+  by <- enexpr(by)
+
+  dt_slice_head(.data, n = !!n, by = !!by)
 }
 
 #' @export
 #' @rdname dt_slice
 dt_slice_tail <- function(.data, n = 5, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_slice_tail")
+}
 
-  if (!is.numeric(n) | length(n) > 1) stop("n must be a single number")
+#' @export
+dt_slice_tail.tidytable <- function(.data, n = 5, by = NULL) {
 
+  n <- enexpr(n)
   by <- enexpr(by)
 
   eval_tidy(expr(
-    .data[, tail(.SD, n), !!by]
+    .data[, tail(.SD, !!n), !!by]
   ))
+}
+
+#' @export
+dt_slice_tail.data.frame <- function(.data, n = 5, by = NULL) {
+
+  .data <- as_tidytable(.data)
+  n <- enexpr(n)
+  by <- enexpr(by)
+
+  dt_slice_tail(.data, n = !!n, by = !!by)
 }
 
 #' @export
 #' @rdname dt_slice
 dt_slice_max <- function(.data, order_by, n = 1, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_slice_max")
+}
+
+#' @export
+dt_slice_max.data.frame <- function(.data, order_by, n = 1, by = NULL) {
+  if (!is_tidytable(.data)) .data <- as_tidytable(.data)
 
   if (missing(order_by)) stop("order_by must be supplied")
 
-  if (!is.numeric(n) | length(n) > 1) stop("n must be a single number")
-
   order_by <- enexpr(order_by)
+  n <- enexpr(n)
   by <- enexpr(by)
 
   .data %>%
     dt_arrange(-!!order_by) %>%
-    dt_slice_head(n, by = !!by)
+    dt_slice_head(!!n, by = !!by)
 }
 
 #' @export
 #' @rdname dt_slice
 dt_slice_min <- function(.data, order_by, n = 1, by = NULL) {
-  if (!is.data.frame(.data)) stop(".data must be a data.frame or data.table")
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+  UseMethod("dt_slice_min")
+}
+
+#' @export
+dt_slice_min.data.frame <- function(.data, order_by, n = 1, by = NULL) {
+  if (!is_tidytable(.data)) .data <- as_tidytable(.data)
 
   if (missing(order_by)) stop("order_by must be supplied")
 
-  if (!is.numeric(n) | length(n) > 1) stop("n must be a single number")
-
   order_by <- enexpr(order_by)
+  n <- enexpr(n)
   by <- enexpr(by)
 
   .data %>%
     dt_arrange(!!order_by) %>%
-    dt_slice_head(n, by = !!by)
+    dt_slice_head(!!n, by = !!by)
 }

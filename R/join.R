@@ -20,9 +20,14 @@
 #' df1 %>% dt_full_join(df2)
 #' df1 %>% dt_anti_join(df2)
 dt_left_join <- function(x, y, by = NULL) {
+  UseMethod("dt_left_join")
+}
+
+#' @export
+dt_left_join.default <- function(x, y, by = NULL) {
   if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
+  if (!is.data.table(x)) x <- as_tidytable(x)
+  if (!is.data.table(y)) y <- as_tidytable(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -34,15 +39,20 @@ dt_left_join <- function(x, y, by = NULL) {
 
   all_names <- c(names(x), setdiff(names(y), names(x)))
 
-  y[x, on = on_vec, allow.cartesian = TRUE][, ..all_names]
+  as_tidytable(y[x, on = on_vec, allow.cartesian = TRUE][, ..all_names])
 }
 
 #' @export
 #' @rdname dt_left_join
 dt_inner_join <- function(x, y, by = NULL) {
+  UseMethod("dt_inner_join")
+}
+
+#' @export
+dt_inner_join.default <- function(x, y, by = NULL) {
   if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
+  if (!is.data.table(x)) x <- as_tidytable(x)
+  if (!is.data.table(y)) y <- as_tidytable(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -52,15 +62,20 @@ dt_inner_join <- function(x, y, by = NULL) {
   on_vec <- by_y
   names(on_vec) <- by_x
 
-  x[y, on = on_vec, allow.cartesian = TRUE, nomatch = 0]
+  as_tidytable(x[y, on = on_vec, allow.cartesian = TRUE, nomatch = 0])
 }
 
 #' @export
 #' @rdname dt_left_join
 dt_right_join <- function(x, y, by = NULL) {
+  UseMethod("dt_right_join")
+}
+
+#' @export
+dt_right_join.default <- function(x, y, by = NULL) {
   if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
+  if (!is.data.table(x)) x <- as_tidytable(x)
+  if (!is.data.table(y)) y <- as_tidytable(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -70,22 +85,33 @@ dt_right_join <- function(x, y, by = NULL) {
   on_vec <- by_y
   names(on_vec) <- by_x
 
-  x[y, on = on_vec, allow.cartesian = TRUE]
+  as_tidytable(x[y, on = on_vec, allow.cartesian = TRUE])
 }
 
 #' @export
 #' @rdname dt_left_join
 dt_full_join <- function(x, y, by = NULL, suffix = c(".x", ".y")) {
-  join_mold(x, y, by = by, suffix = suffix,
-            all_x = TRUE, all_y = TRUE)
+  UseMethod("dt_full_join")
+}
+
+#' @export
+dt_full_join.default <- function(x, y, by = NULL, suffix = c(".x", ".y")) {
+    join_mold(x, y, by = by, suffix = suffix,
+              all_x = TRUE, all_y = TRUE)
+
 }
 
 #' @export
 #' @rdname dt_left_join
 dt_anti_join <- function(x, y, by = NULL) {
+  UseMethod("dt_anti_join")
+}
+
+#' @export
+dt_anti_join.default <- function(x, y, by = NULL) {
   if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
+  if (!is.data.table(x)) x <- as_tidytable(x)
+  if (!is.data.table(y)) y <- as_tidytable(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -95,7 +121,7 @@ dt_anti_join <- function(x, y, by = NULL) {
   on_vec <- by_y
   names(on_vec) <- by_x
 
-  x[!y, on = on_vec, allow.cartesian = TRUE]
+  as_tidytable(x[!y, on = on_vec, allow.cartesian = TRUE])
 }
 
 get_bys <- function(x, y, by) {
@@ -118,8 +144,8 @@ get_bys <- function(x, y, by) {
 
 join_mold <- function(x, y, by = NULL, suffix = c(".x", ".y"), all_x, all_y) {
   if (!is.data.frame(x) | !is.data.frame(y)) stop("x & y must be a data.frame or data.table")
-  if (!is.data.table(x)) x <- as.data.table(x)
-  if (!is.data.table(y)) y <- as.data.table(y)
+  if (!is.data.table(x)) x <- as_tidytable(x)
+  if (!is.data.table(y)) y <- as_tidytable(y)
 
   by_x_y <- get_bys(x, y, by)
 
@@ -129,7 +155,9 @@ join_mold <- function(x, y, by = NULL, suffix = c(".x", ".y"), all_x, all_y) {
   if (by_x %notin% colnames(x)) stop("by.x columns not in x")
   if (by_y %notin% colnames(y)) stop("by.y columns not in y")
 
-  merge(x = x, y = y, by.x = by_x, by.y = by_y, suffixes = suffix,
-        all.x = all_x, all.y = all_y,
-        allow.cartesian = TRUE)
+  as_tidytable(
+    merge(x = x, y = y, by.x = by_x, by.y = by_y, suffixes = suffix,
+          all.x = all_x, all.y = all_y,
+          allow.cartesian = TRUE)
+  )
 }

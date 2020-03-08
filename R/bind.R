@@ -1,12 +1,9 @@
 #' Bind data.tables by row and column
 #'
 #' @description
-#'
 #' Bind rows or columns together.
 #'
-#'
-#' @param .data A data.table to bind, or a list of data.tables
-#' @param ... Data frames to bind
+#' @param ... data.tables or data.frames to bind
 #' @param .id If TRUE, an integer column is made as a group id
 #'
 #' @export
@@ -25,46 +22,42 @@
 #'   dt_bind_cols(df2)
 #'
 #' dt_bind_cols(list(df1, df2))
-dt_bind_rows <- function(.data, ..., .id = NULL) {
-  # check if input .data is already a list; if not, transform to list
-  if (class(.data)[1] != "list") {
-    .data <- list(.data)
-  }
+dt_bind_rows <- function(..., .id = NULL) {
+  UseMethod("dt_bind_rows")
+}
+
+#' @export
+dt_bind_rows.default <- function(..., .id = NULL) {
 
   dots <- list(...)
-  dots <- append(.data, dots)
-
-  if (!all(dt_map_lgl(dots, is.data.frame)))
-    stop("All inputs must be a data.frame or data.table")
+  dots <- squash(dots)
 
   if (!all(dt_map_lgl(dots, is.data.table)))
     dots <- dt_map(dots, as.data.table)
 
-  rbindlist(dots, idcol = .id)
+  dots <- rbindlist(dots, idcol = .id)
+
+  as_tidytable(dots)
 }
 
 #' @export
 #' @rdname dt_bind_rows
-dt_bind_cols <- function(.data, ...) {
-  # check if input .data is already a list; if not, transform to list
-  if (class(.data)[1] != "list") {
-    .data <- list(.data)
-  }
+dt_bind_cols <- function(...) {
+  UseMethod("dt_bind_cols")
+}
+
+#' @export
+dt_bind_cols.default <- function(...) {
 
   dots <- list(...)
-  dots <- append(.data, dots)
-
-  if (!all(dt_map_lgl(dots, is.data.frame)))
-    stop("All inputs must be a data.frame or data.table")
+  dots <- squash(dots)
 
   if (!all(dt_map_lgl(dots, is.data.table)))
     dots <- dt_map(dots, as.data.table)
 
-  result_df <- name_fix(do.call(cbind, dots))
+  as_tidytable(name_fix(setDT(unlist(dots, recursive = FALSE), check.names = FALSE)[]))
 
-  result_df
 }
-
 
 name_fix <- function(.data) {
 

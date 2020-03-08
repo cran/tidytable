@@ -4,7 +4,7 @@
 \alias{dt_unnest_legacy}
 \title{Unnest a nested data.table}
 \usage{
-dt_unnest_legacy(.data, col)
+dt_unnest_legacy(.data, col = NULL)
 }
 \arguments{
 \item{.data}{A nested data.table}
@@ -21,9 +21,6 @@ nested_df <- data.table::data.table(
   c = c(rep("a", 6), rep("b", 4)),
   d = c(rep("a", 4), rep("b", 6))) \%>\%
   dt_group_nest(c, d)
-
-nested_df \%>\%
-  dt_unnest_legacy(data)
 
 nested_df \%>\%
   dt_unnest_legacy(data)

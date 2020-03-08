@@ -18,25 +18,29 @@
 #'
 #' nested_df %>%
 #'   dt_unnest_legacy(data)
-#'
-#' nested_df %>%
-#'   dt_unnest_legacy(data)
-dt_unnest_legacy <- function(.data, col) {
-  if (!is.data.table(.data)) .data <- as.data.table(.data)
+dt_unnest_legacy <- function(.data, col = NULL) {
+  UseMethod("dt_unnest_legacy")
+}
+
+#' @export
+dt_unnest_legacy.data.frame <- function(.data, col = NULL) {
+  if (!is_tidytable(.data)) .data <- as_tidytable(.data)
 
   col <- enexpr(col)
 
-  keep <- syms(colnames(.data)[!dt_map_lgl(.data, is.list)])
+  if (is.null(col)) abort("col must be supplied")
+
+  keep_cols <- colnames(.data)[!dt_map_lgl(.data, is.list)]
 
   is_datatable <- is.data.table(.data[[col]][[1]])
 
   if (is_datatable) {
     .data <- eval_tidy(expr(
-      .data[, unlist(!!col, recursive = FALSE), by = list(!!!keep)]
+      .data[, unlist(!!col, recursive = FALSE), by = keep_cols]
     ))
   } else {
     .data <- eval_tidy(expr(
-      .data[, list(.new_col = unlist(!!col, recursive = FALSE)), by = list(!!!keep)]
+      .data[, list(.new_col = unlist(!!col, recursive = FALSE)), by = keep_cols]
     )) %>%
       dt_rename(!!col := .new_col)
   }
