@@ -6,7 +6,7 @@
 #' Supports enhanced selection
 #'
 #' @param .data A data.frame or data.table
-#' @param ... bare column names to group by. If empty nests the entire data.table
+#' @param ... Columns to group by. If empty nests the entire data.table
 #' @param .key Name of the new column created by nesting
 #'
 #' @export
@@ -18,41 +18,46 @@
 #'   d = c(rep("a", 4), rep("b", 6)))
 #'
 #' test_df %>%
-#'   dt_group_nest()
+#'   nest_by.()
 #'
 #' test_df %>%
-#'   dt_group_nest(c, d)
+#'   nest_by.(c, d)
 #'
 #' test_df %>%
-#'   dt_group_nest(is.character)
-dt_group_nest <- function(.data, ..., .key = "data") {
-  UseMethod("dt_group_nest")
+#'   nest_by.(is.character)
+nest_by. <- function(.data, ..., .key = "data") {
+  UseMethod("nest_by.")
 }
 
 #' @export
-dt_group_nest.tidytable <- function(.data, ..., .key = "data") {
+nest_by..tidytable <- function(.data, ..., .key = "data") {
 
   dots <- enexprs(...)
 
   if (length(dots) == 0) {
-    .data <- eval_tidy(expr(.data[, list(data = list(.SD))]))
 
-    .data <- .data %>%
-      dt_rename(!!.key := data)
+    .data <- eval_expr(.data[, list(data = list(.SD))])
+
   } else {
     dots <- dots_selector(.data, ...)
 
-    .data <- eval_tidy(expr(.data[, list(data = list(.SD)), by = list(!!!dots)]))
-
-    .data <- .data %>%
-      dt_rename(!!.key := data)
+    .data <- eval_expr(
+      .data[, list(data = list(.SD)), by = list(!!!dots)]
+      )
   }
+
+  if (.key != "data") .data <- rename.(.data, !!.key := data)
+
   .data
 }
 
 #' @export
-dt_group_nest.data.frame <- function(.data, ..., .key = "data") {
+nest_by..data.frame <- function(.data, ..., .key = "data") {
   .data <- as_tidytable(.data)
 
-  dt_group_nest(.data, ..., .key = .key)
+  nest_by.(.data, ..., .key = .key)
 }
+
+#' @export
+#' @rdname nest_by.
+dt_group_nest <- nest_by.

@@ -5,10 +5,16 @@
 #'
 #' @param .data A data.frame or data.table
 #' @param ... Aggregations to perform
-#' @param by Optional: `list()` of bare column names to group by
+#' @param by Columns to group by.
+#' * A single column can be passed with `by = d`.
+#' * Multiple columns can be passed with `by = c(c, d)` or `by = list(c, d)`
+#' * Enhanced selection can be used:
+#'   + Single predicate: `by = is.character`
+#'   + Multiple predicates: `by = c(is.character, is.factor)`
+#'   + A combination of predicates and column names: `by = c(is.character, b)`
 #'
 #' @export
-#'
+#' @md
 #' @examples
 #' example_dt <- data.table::data.table(
 #'   a = c(1,2,3),
@@ -17,36 +23,49 @@
 #'   d = c("a","a","b"))
 #'
 #' example_dt %>%
-#'   dt_summarize(avg_a = mean(a),
-#'                max_b = max(b),
-#'                by = c)
+#'   summarize.(avg_a = mean(a),
+#'              max_b = max(b),
+#'              by = c)
 #'
 #' example_dt %>%
-#'   dt_summarize(avg_a = mean(a),
-#'                by = list(c, d))
-dt_summarize <- function(.data, ..., by = NULL) {
-  UseMethod("dt_summarize")
+#'   summarize.(avg_a = mean(a),
+#'                by = c(c, d))
+summarize. <- function(.data, ..., by = NULL) {
+  UseMethod("summarize.")
 }
 
 #' @export
-dt_summarize.tidytable <- function(.data, ..., by = NULL) {
+summarize..tidytable <- function(.data, ..., by = NULL) {
 
   dots <- enexprs(...)
   by <- enexpr(by)
+  by <- vec_selector_by(.data, !!by)
 
-  eval_tidy(expr(
-    .data[, list(!!!dots), !!by]
-  ))
+  # Needed so n.() works
+  # Puts () around each summary function
+  dots <- map.(dots, ~ parse_expr(str_c("(", deparse(.x), ")")))
+
+  eval_expr(
+    .data[, list(!!!dots), by = !!by]
+  )
 }
 
 #' @export
-dt_summarize.data.frame <- function(.data, ..., by = NULL) {
+summarize..data.frame <- function(.data, ..., by = NULL) {
   .data <- as_tidytable(.data)
   by <- enexpr(by)
 
-  dt_summarize(.data, ..., by = !!by)
+  summarize.(.data, ..., by = !!by)
 }
 
 #' @export
-#' @rdname dt_summarize
-dt_summarise <- dt_summarize
+#' @rdname summarize.
+summarise. <- summarize.
+
+#' @export
+#' @rdname summarize.
+dt_summarise <- summarize.
+
+#' @export
+#' @rdname summarize.
+dt_summarize <- summarize.

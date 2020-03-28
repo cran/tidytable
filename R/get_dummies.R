@@ -22,32 +22,32 @@
 #'
 #' # Automatically does all character/factor columns
 #' test_df %>%
-#'   dt_get_dummies()
+#'   get_dummies.()
 #'
 #' # Can select one column
 #' test_df %>%
-#'   dt_get_dummies(col1)
+#'   get_dummies.(col1)
 #'
 #' # Can select one or multiple columns in a vector of unquoted column names
 #' test_df %>%
-#'   dt_get_dummies(c(col1, col2))
+#'   get_dummies.(c(col1, col2))
 #'
 #' test_df %>%
-#'   dt_get_dummies(prefix_sep = ".", drop_first = TRUE)
+#'   get_dummies.(prefix_sep = ".", drop_first = TRUE)
 #'
 #' test_df %>%
-#'   dt_get_dummies(c(col1, col2), dummify_na = FALSE)
-dt_get_dummies <- function(.data,
+#'   get_dummies.(c(col1, col2), dummify_na = FALSE)
+get_dummies. <- function(.data,
                            cols = NULL,
                            prefix = TRUE,
                            prefix_sep = "_",
                            drop_first = FALSE,
                            dummify_na = TRUE) {
-  UseMethod("dt_get_dummies")
+  UseMethod("get_dummies.")
 }
 
 #' @export
-dt_get_dummies.data.frame <- function(.data,
+get_dummies..data.frame <- function(.data,
                                       cols = NULL,
                                       prefix = TRUE,
                                       prefix_sep = "_",
@@ -57,13 +57,13 @@ dt_get_dummies.data.frame <- function(.data,
   .data <- as_tidytable(.data)
   cols <- enexpr(cols)
 
-  dt_get_dummies(.data, cols = !!cols,
+  get_dummies.(.data, cols = !!cols,
                  prefix = prefix, prefix_sep = prefix_sep,
                  drop_first = drop_first, dummify_na = dummify_na)
 }
 
 #' @export
-dt_get_dummies.tidytable <- function(.data,
+get_dummies..tidytable <- function(.data,
                                       cols = NULL,
                                       prefix = TRUE,
                                       prefix_sep = "_",
@@ -75,10 +75,10 @@ dt_get_dummies.tidytable <- function(.data,
 
   if (is.null(cols)) {
     # If NULL, select all character & factor cols
-    data_names <- colnames(.data)
+    data_names <- names(.data)
 
-    chr_cols <- data_names[dt_map_lgl(.data, is.character)]
-    fct_cols <- data_names[dt_map_lgl(.data, is.factor)]
+    chr_cols <- data_names[map_lgl.(.data, is.character)]
+    fct_cols <- data_names[map_lgl.(.data, is.factor)]
 
     cols <- syms(c(chr_cols, fct_cols))
   } else {
@@ -101,22 +101,30 @@ dt_get_dummies.tidytable <- function(.data,
 
     .data[, (new_names) := 0]
 
+    # Remove "NA" from unique vals after new_names columns are made
+    not_na_cols <- new_names[unique_vals != "NA"]
+    unique_vals <- unique_vals[unique_vals != "NA"]
+
     for (i in seq_along(unique_vals)) {
-      eval_tidy(expr(
-        .data[!!col == unique_vals[i], new_names[i] := 1L][]
-      ))
+      eval_expr(
+        .data[!!col == unique_vals[i], not_na_cols[i] := 1L]
+      )
     }
 
     # Since the prior step doesn't recognize NA as a character,
     # an extra step is needed to flag NA vals
     if (dummify_na) {
 
-      na_col <- new_names[str_detect(new_names, "NA")]
+      na_col <- new_names[!new_names %in% not_na_cols]
 
-      eval_tidy(expr(
-        .data[is.na(!!col), (na_col) := 1][]
-      ))
+      eval_expr(
+        .data[is.na(!!col), (na_col) := 1]
+      )
     }
   }
-  .data
+  .data[]
 }
+
+#' @export
+#' @rdname get_dummies.
+dt_get_dummies <- get_dummies.

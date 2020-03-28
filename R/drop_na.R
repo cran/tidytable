@@ -16,19 +16,19 @@
 #'   y = c("a",NA,"b"))
 #'
 #' df %>%
-#'   dt_drop_na()
+#'   drop_na.()
 #'
 #' df %>%
-#'   dt_drop_na(x)
+#'   drop_na.(x)
 #'
 #' df %>%
-#'   dt_drop_na(is.numeric)
-dt_drop_na <- function(.data, ...) {
-  UseMethod("dt_drop_na")
+#'   drop_na.(is.numeric)
+drop_na. <- function(.data, ...) {
+  UseMethod("drop_na.")
 }
 
 #' @export
-dt_drop_na.tidytable <- function(.data, ...) {
+drop_na..tidytable <- function(.data, ...) {
 
   dots <- enexprs(...)
 
@@ -38,17 +38,21 @@ dt_drop_na.tidytable <- function(.data, ...) {
     dots <- dots_selector(.data, ...)
 
     for (dot in dots) {
-      .data <- eval_tidy(expr(
+      .data <- eval_expr(
         .data[!is.na(!!dot)]
-      ))
+      )
     }
     .data
   }
 }
 
 #' @export
-dt_drop_na.data.frame <- function(.data, ...) {
+drop_na..data.frame <- function(.data, ...) {
   .data <- as_tidytable(.data)
 
-  dt_drop_na(.data, ...)
+  drop_na.(.data, ...)
 }
+
+#' @export
+#' @rdname drop_na.
+dt_drop_na <- drop_na.

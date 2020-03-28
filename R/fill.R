@@ -3,10 +3,12 @@
 #' @description
 #' Fills missing values in the selected columns using the next or previous entry. Can be done by group.
 #'
+#' Supports enhanced selection
+#'
 #' @param .data A data.frame or data.table
-#' @param ... A selection of bare columns
+#' @param ... A selection of columns
 #' @param .direction Direction in which to fill missing values. Currently "down" (the default), "up", "downup" (first down then up), or "updown" (first up and then down)
-#' @param by Whether the filling should be done by group. Passed in a `list()`
+#' @param by Columns to group by when filling should be done by group
 #' @export
 #' @md
 #'
@@ -17,91 +19,72 @@
 #'   z = c(rep("a", 8), rep("b", 2)))
 #'
 #' test_df %>%
-#'   dt_fill(x, y, by = z)
+#'   fill.(x, y, by = z)
 #'
 #' test_df %>%
-#'   dt_fill(x, y, by = z, .direction = "downup")
-dt_fill <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
-  UseMethod("dt_fill")
+#'   fill.(x, y, by = z, .direction = "downup")
+fill. <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
+  UseMethod("fill.")
 }
 
 #' @export
-dt_fill.tidytable <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
+fill..tidytable <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
   by <- enexpr(by)
 
   if (length(.direction) > 1) .direction <- "down"
 
   if (.direction == "down") {
-    filldown(.data, ..., by = !!by)
+    filler(.data, ..., type = "locf", by = !!by)
   } else if (.direction == "up") {
-    fillup(.data, ..., by = !!by)
+    filler(.data, ..., type = "nocb", by = !!by)
   } else if (.direction == "downup") {
     .data %>%
-      filldown(..., by = !!by) %>%
-      fillup(..., by = !!by)
+      filler(..., type = "locf", by = !!by) %>%
+      filler(..., type = "nocb", by = !!by)
   } else {
     .data %>%
-      fillup(..., by = !!by) %>%
-      filldown(..., by = !!by)
+      filler(..., type = "nocb", by = !!by) %>%
+      filler(..., type = "locf", by = !!by)
   }
 }
 
 #' @export
-dt_fill.data.frame <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
+fill..data.frame <- function(.data, ..., .direction = c("down", "up", "downup", "updown"), by = NULL) {
   .data <- as_tidytable(.data)
   by <- enexpr(by)
 
-  dt_fill(.data, ..., .direction = .direction, by = !!by)
+  fill.(.data, ..., .direction = .direction, by = !!by)
 
 }
 
-filldown <- function(.data, ..., by = NULL) {
+#' @export
+#' @rdname fill.
+dt_fill <- fill.
 
-  dots <- dots_selector(.data, ...)
+filler <- function(.data, ..., type = "locf", by = NULL) {
+
+  all_cols <- as.character(dots_selector(.data, ...))
+
   by <- enexpr(by)
+  by <- vec_selector_by(.data, !!by)
 
-  for (dot in dots) {
-    dot_type <- eval_tidy(expr(class('$'(.data, !!dot))))
+  subset_data <- .data[, ..all_cols]
 
-    if (dot_type %in% c("integer", "double", "numeric")) {
-      .data <- .data %>%
-        dt_mutate(!!dot := nafill(!!dot, type = "locf"), by = !!by)
-    } else if (dot_type %in% c("character", "logical", "factor")) {
-      .data <- eval_tidy(expr(
-        .data %>%
-          dt_mutate(na_index = 1:.N, by = !!by) %>%
-          dt_mutate(na_index = fifelse(is.na(!!dot), NA_integer_, na_index)) %>%
-          dt_mutate(na_index = nafill(na_index, type = "locf"), by = !!by) %>%
-          dt(, !!dot := .SD[, !!dot][na_index], by = !!by) %>%
-          dt(, na_index := NULL) %>%
-          dt()
-      ))
-    }
-  }
-  .data
-}
+  numeric_cols <- all_cols[dt_map_lgl(subset_data, is.numeric)]
+  other_cols <- all_cols[!all_cols %in% numeric_cols]
 
-fillup <- function(.data, ..., by = NULL) {
+  if (length(numeric_cols) > 0)
+    .data <- eval_expr(
+      dt(.data, , !!numeric_cols := lapply(.SD, nafill, !!type), .SDcols = !!numeric_cols, by = !!by)
+    )
+  if (length(other_cols) > 0) {
+    other_cols <- syms(other_cols)
 
-  dots <- dots_selector(.data, ...)
-  by <- enexpr(by)
-
-  for (dot in dots) {
-    dot_type <- eval_tidy(expr(class('$'(.data, !!dot))))
-
-    if (dot_type %in% c("integer", "double", "numeric")) {
-      .data <- .data %>%
-        dt_mutate(!!dot := nafill(!!dot, type = "nocb"), by = !!by)
-    } else if (dot_type %in% c("character", "logical", "factor")) {
-      .data <- eval_tidy(expr(
-        .data %>%
-          dt_mutate(na_index = 1:.N, by = !!by) %>%
-          dt_mutate(na_index = fifelse(is.na(!!dot), NA_integer_, na_index)) %>%
-          dt_mutate(na_index = nafill(na_index, type = "nocb"), by = !!by) %>%
-          dt(, !!dot := .SD[, !!dot][na_index], by = !!by) %>%
-          dt(, na_index := NULL) %>%
-          dt()
-      ))
+    for (col in other_cols) {
+      .data <- eval_expr(
+        dt(.data, , !!col := .SD[, !!col][nafill(fifelse(is.na(!!col), NA_integer_, 1:.N), type = !!type)],
+             by = !!by)
+      )
     }
   }
   .data

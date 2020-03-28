@@ -14,26 +14,28 @@
 #'   c = c("a","a","b"))
 #'
 #' example_dt %>%
-#'   dt_arrange(a, -c)
-dt_arrange <- function(.data, ...) {
-  UseMethod("dt_arrange")
+#'   arrange.(a, -c)
+arrange. <- function(.data, ...) {
+  UseMethod("arrange.")
 }
 
 #' @export
-dt_arrange.tidytable <- function(.data, ...) {
+arrange..tidytable <- function(.data, ...) {
 
   dots <- enexprs(...)
 
-  .data <- eval_tidy(expr(
+  eval_expr(
     .data[order(!!!dots)]
-    ))
-
-  .data
+  )
 }
 
 #' @export
-dt_arrange.data.frame <- function(.data, ...) {
+arrange..data.frame <- function(.data, ...) {
   .data <- as_tidytable(.data)
 
-  dt_arrange(.data, ...)
+  arrange.(.data, ...)
 }
+
+#' @export
+#' @rdname arrange.
+dt_arrange <- arrange.

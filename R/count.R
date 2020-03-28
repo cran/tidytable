@@ -6,7 +6,7 @@
 #' Supports enhanced selection
 #'
 #' @param .data A data.frame or data.table
-#' @param ... Optional: Bare column names to group by
+#' @param ... Columns to group by
 #'
 #' @export
 #' @md
@@ -18,38 +18,35 @@
 #'   z = c("a", "a", "b"))
 #'
 #' example_df %>%
-#'   dt_count()
+#'   count.()
 #'
 #' example_df %>%
-#'   dt_count(z)
+#'   count.(z)
 #'
 #' example_df %>%
-#'   dt_count(is.character)
-dt_count <- function(.data, ...) {
-  UseMethod("dt_count")
+#'   count.(is.character)
+count. <- function(.data, ...) {
+  UseMethod("count.")
 }
 
 #' @export
-dt_count.tidytable <- function(.data, ...) {
+count..tidytable <- function(.data, ...) {
 
-  dots <- enexprs(...)
+  by <- dots_selector_by(.data, ...)
 
-  if (length(dots) == 0) {
-    .data <- .data[, list(N = .N)]
-  } else {
-    by_vec <- dots_selector(.data, ...) %>%
-      as.character()
-
-  .data <- eval_tidy(expr(
-    .data[, .N, by = by_vec]
-    ))
-  }
-  .data
+  eval_expr(
+    .data[, list(N = .N), by = !!by]
+  )
 }
 
 #' @export
-dt_count.data.frame <- function(.data, ...) {
+count..data.frame <- function(.data, ...) {
   .data <- as_tidytable(.data)
 
-  dt_count(.data, ...)
+  count.(.data, ...)
 }
+
+#' @export
+#' @rdname count.
+dt_count <- count.
+

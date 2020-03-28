@@ -5,7 +5,7 @@
 #'
 #' @param .data A data.frame or data.table
 #' @param ... Columns to add/modify
-#' @param by Optional: `list()` of bare column names to group by
+#' @param by Columns to group by
 #'
 #' @md
 #' @export
@@ -17,46 +17,72 @@
 #'   c = c("a","a","b"))
 #'
 #' example_dt %>%
-#'   dt_mutate(double_a = a * 2,
-#'             a_plus_b = a + b)
+#'   mutate.(double_a = a * 2,
+#'           a_plus_b = a + b)
 #'
 #' example_dt %>%
-#'   dt_mutate(double_a = a * 2,
-#'             avg_a = mean(a),
-#'             by = c)
-dt_mutate <- function(.data, ..., by = NULL) {
-  UseMethod("dt_mutate")
+#'   mutate.(double_a = a * 2,
+#'           avg_a = mean(a),
+#'           by = c)
+mutate. <- function(.data, ..., by = NULL) {
+  UseMethod("mutate.")
 }
 
 #' @export
-dt_mutate.tidytable <- function(.data, ..., by = NULL) {
+mutate..tidytable <- function(.data, ..., by = NULL) {
 
   dots <- enexprs(...)
   by <- enexpr(by)
   .data <- shallow(.data)
 
-  all_names <- names(dots)
-
   if (is.null(by)) {
     # Faster version if there is no "by" provided
+    all_names <- names(dots)
+
     for (i in seq_along(dots)) {
-      eval_tidy(expr(
-        .data[, ':='(all_names[[i]], !!dots[[i]])][]
-      ))
+
+      .col_name <- all_names[[i]]
+      val <- dots[i][[1]]
+
+      # Prevent modify-by-reference if the column already exists in the data.table
+      # Steps: Create new col with random name, delete original col, rename random back to original, reorder
+      # Fixes cases when user supplies a single value ex. 1, -1, "a"
+      # !is.null(val) allows for columns to be deleted using mutate.(.data, col = NULL)
+      if (.col_name %in% names(.data) && !is.null(val)) {
+        col_order <- unique(c(names(.data), .col_name))
+
+        eval_expr(
+          .data[, ':='(.new_col, !!val)][, !!.col_name := NULL]
+        )
+
+        setnames(.data, ".new_col", .col_name)
+        setcolorder(.data, col_order)
+      } else {
+        eval_expr(
+          .data[, ':='(!!.col_name, !!val)]
+        )
+      }
     }
   } else {
     # Faster with "by", since the "by" call isn't looped multiple times for each column added
-    eval_tidy(expr(
-      .data[, ':='(!!!dots), by = !!by][]
-    ))
+    by <- vec_selector_by(.data, !!by)
+
+    eval_expr(
+      .data[, ':='(!!!dots), by = !!by]
+    )
   }
-  .data
+  .data[]
 }
 
 #' @export
-dt_mutate.data.frame <- function(.data, ..., by = NULL) {
+mutate..data.frame <- function(.data, ..., by = NULL) {
   .data <- as_tidytable(.data)
   by <- enexpr(by)
 
-  dt_mutate(.data, ..., by = !!by)
+  mutate.(.data, ..., by = !!by)
 }
+
+
+#' @export
+#' @rdname mutate.
+dt_mutate <- mutate.

@@ -14,35 +14,42 @@
 #'   b = 11:20,
 #'   c = c(rep("a", 6), rep("b", 4)),
 #'   d = c(rep("a", 4), rep("b", 6))) %>%
-#'   dt_group_nest(c, d)
+#'   nest_by.(c, d)
 #'
 #' nested_df %>%
-#'   dt_unnest_legacy(data)
-dt_unnest_legacy <- function(.data, col = NULL) {
-  UseMethod("dt_unnest_legacy")
+#'   unnest.(data)
+unnest. <- function(.data, col = NULL) {
+  UseMethod("unnest.")
 }
 
 #' @export
-dt_unnest_legacy.data.frame <- function(.data, col = NULL) {
+unnest..data.frame <- function(.data, col = NULL) {
   if (!is_tidytable(.data)) .data <- as_tidytable(.data)
 
   col <- enexpr(col)
 
   if (is.null(col)) abort("col must be supplied")
 
-  keep_cols <- colnames(.data)[!dt_map_lgl(.data, is.list)]
+  keep_cols <- names(.data)[!dt_map_lgl(.data, is.list)]
 
-  is_datatable <- is.data.table(.data[[col]][[1]])
+  is_datatable <- is.data.table(
+    eval_expr('$'(.data, !!col))[[1]]
+    )
 
   if (is_datatable) {
-    .data <- eval_tidy(expr(
+    .data <- eval_expr(
       .data[, unlist(!!col, recursive = FALSE), by = keep_cols]
-    ))
+    )
   } else {
-    .data <- eval_tidy(expr(
+    .data <- eval_expr(
       .data[, list(.new_col = unlist(!!col, recursive = FALSE)), by = keep_cols]
-    )) %>%
+    ) %>%
       dt_rename(!!col := .new_col)
   }
   .data
 }
+
+#' @export
+#' @rdname unnest.
+dt_unnest_legacy <- unnest.
+
