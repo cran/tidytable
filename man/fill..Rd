@@ -17,7 +17,7 @@ dt_fill(
 \arguments{
 \item{.data}{A data.frame or data.table}
 
-\item{...}{A selection of columns}
+\item{...}{A selection of columns. \code{tidyselect} compatible.}
 
 \item{.direction}{Direction in which to fill missing values. Currently "down" (the default), "up", "downup" (first down then up), or "updown" (first up and then down)}
 
@@ -26,10 +26,10 @@ dt_fill(
 \description{
 Fills missing values in the selected columns using the next or previous entry. Can be done by group.
 
-Supports enhanced selection
+Supports tidyselect
 }
 \examples{
-test_df <- data.table::data.table(
+test_df <- tidytable(
   x = c(NA, NA, NA, 4:10),
   y = c(1:6, NA, 8, NA, 10),
   z = c(rep("a", 8), rep("b", 2)))

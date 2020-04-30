@@ -3,13 +3,13 @@
 #' @description
 #' Nest data.tables by group
 #'
-#' Supports enhanced selection
-#'
 #' @param .data A data.frame or data.table
-#' @param ... Columns to group by. If empty nests the entire data.table
+#' @param ... Columns to group by. If empty nests the entire data.table.
+#' `tidyselect` compatible.
 #' @param .key Name of the new column created by nesting
 #'
 #' @export
+#' @md
 #'
 #' @examples
 #' test_df <- data.table::data.table(a = 1:10,
@@ -30,7 +30,9 @@ nest_by. <- function(.data, ..., .key = "data") {
 }
 
 #' @export
-nest_by..tidytable <- function(.data, ..., .key = "data") {
+nest_by..data.frame <- function(.data, ..., .key = "data") {
+
+  .data <- as_tidytable(.data)
 
   dots <- enexprs(...)
 
@@ -39,23 +41,16 @@ nest_by..tidytable <- function(.data, ..., .key = "data") {
     .data <- eval_expr(.data[, list(data = list(.SD))])
 
   } else {
-    dots <- dots_selector(.data, ...)
+    by <- dots_selector_by(.data, ...)
 
     .data <- eval_expr(
-      .data[, list(data = list(.SD)), by = list(!!!dots)]
+      .data[, list(data = list(.SD)), by = !!by]
       )
   }
 
   if (.key != "data") .data <- rename.(.data, !!.key := data)
 
   .data
-}
-
-#' @export
-nest_by..data.frame <- function(.data, ..., .key = "data") {
-  .data <- as_tidytable(.data)
-
-  nest_by.(.data, ..., .key = .key)
 }
 
 #' @export

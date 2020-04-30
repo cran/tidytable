@@ -3,15 +3,15 @@
 #' @description
 #' Drop rows containing missing values
 #'
-#' Supports enhanced selection
-#'
 #' @param .data A data.frame or data.table
 #' @param ... Optional: A selection of columns. If empty, all variables are selected.
+#' `tidyselect` compatible.
 #'
 #' @export
+#' @md
 #'
 #' @examples
-#' df <- data.table::data.table(
+#' df <- tidytable(
 #'   x = c(1,2,NA),
 #'   y = c("a",NA,"b"))
 #'
@@ -28,29 +28,19 @@ drop_na. <- function(.data, ...) {
 }
 
 #' @export
-drop_na..tidytable <- function(.data, ...) {
+drop_na..data.frame <- function(.data, ...) {
+
+  .data <- as_tidytable(.data)
 
   dots <- enexprs(...)
 
   if (length(dots) == 0) {
     na.omit(.data)
   } else {
-    dots <- dots_selector(.data, ...)
+    drop_cols <- dots_selector_i(.data, ...)
 
-    for (dot in dots) {
-      .data <- eval_expr(
-        .data[!is.na(!!dot)]
-      )
-    }
-    .data
+    na.omit(.data, cols = drop_cols)
   }
-}
-
-#' @export
-drop_na..data.frame <- function(.data, ...) {
-  .data <- as_tidytable(.data)
-
-  drop_na.(.data, ...)
 }
 
 #' @export

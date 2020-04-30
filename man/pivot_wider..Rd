@@ -26,22 +26,27 @@ dt_pivot_wider(
 \arguments{
 \item{.data}{the data table to widen}
 
-\item{names_from}{A pair of arguments describing which column (or columns) to get the name of the output column (\code{name_from}), and which column (or columns) to get the cell values from (\code{values_from}).}
+\item{names_from}{A pair of arguments describing which column (or columns) to get the name of the output column (\code{name_from}),
+and which column (or columns) to get the cell values from (\code{values_from}).
+\code{tidyselect} compatible.}
 
-\item{values_from}{A pair of arguments describing which column (or columns) to get the name of the output column (\code{name_from}), and which column (or columns) to get the cell values from (\code{values_from}).}
+\item{values_from}{A pair of arguments describing which column (or columns) to get the name of the output column (\code{name_from}),
+and which column (or columns) to get the cell values from (\code{values_from}).
+\code{tidyselect} compatible.}
 
-\item{id_cols}{A set of columns that uniquely identifies each observation. Defaults to all columns in the data table except for the columns specified in \code{names_from} and \code{values_from}. Typically used when you have additional variables that is directly related.}
+\item{id_cols}{A set of columns that uniquely identifies each observation.
+Defaults to all columns in the data table except for the columns specified in \code{names_from} and \code{values_from}.
+Typically used when you have additional variables that is directly related.
+\code{tidyselect} compatible.}
 
 \item{names_sep}{the separator between the names of the columns}
 
-\item{values_fn}{hould the data be aggregated before casting? If the formula doesn't identify a single observation for each cell, then aggregation defaults to length with a message.}
+\item{values_fn}{Should the data be aggregated before casting? If the formula doesn't identify a single observation for each cell, then aggregation defaults to length with a message.}
 }
 \description{
 \code{pivot_wider.()} "widens" data, increasing the number of columns and
 decreasing the number of rows. The inverse transformation is
 \code{pivot_longer.()}. Syntax based on the \code{tidyr} equivalents.
-
-Supports enhanced selection
 }
 \examples{
 example_dt <- data.table::data.table(

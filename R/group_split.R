@@ -1,13 +1,14 @@
 #' Split data frame by groups
 #'
 #' @description
-#' Split data frame by groups. Returns a list
-#'
-#' Supports enhanced selection
+#' Split data frame by groups. Returns a list.
 #'
 #' @param .data A data.frame or data.table
-#' @param ... Groups to split by
+#' @param ... Columns to group and split by. `tidyselect` compatible.
+#' @param keep Should the grouping columns be kept
+#'
 #' @export
+#' @md
 #'
 #' @examples
 #' test_df <- data.table::data.table(
@@ -18,12 +19,17 @@
 #'
 #' test_df %>%
 #'   group_split.(c, d)
-group_split. <- function(.data, ...) {
+#'
+#' test_df %>%
+#'   group_split.(c, d, keep = FALSE)
+group_split. <- function(.data, ..., keep = TRUE) {
   UseMethod("group_split.")
 }
 
 #' @export
-group_split..tidytable <- function(.data, ...) {
+group_split..data.frame <- function(.data, ..., keep = TRUE) {
+
+  .data <- as_tidytable(.data)
 
   dots <- enexprs(...)
 
@@ -32,15 +38,10 @@ group_split..tidytable <- function(.data, ...) {
   } else {
     dots <- as.character(dots_selector(.data, ...))
 
-    unname(split(.data, by = dots))
+    dots <- unname(split(.data, by = dots, keep.by = keep))
+
+    map.(dots, as_tidytable)
   }
-}
-
-#' @export
-group_split..data.frame <- function(.data, ...) {
-  .data <- as_tidytable(.data)
-
-  group_split.(.data, ...)
 }
 
 #' @export

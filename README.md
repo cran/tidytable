@@ -1,17 +1,17 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# tidytable <img src="man/figures/logo.png" align="right" width="18%" height="18%" />
+# tidytable <img src="man/figures/logo.png" align="right" width="16%" height="16%" />
 
 <!-- badges: start -->
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.4.0-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.4.1-green.svg)](https://github.com/markfairbanks/tidytable)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![CRAN RStudio mirror
-downloads](https://cranlogs.r-pkg.org/badges/last-month/tidytable?color=grey)](https://r-pkg.org/pkg/tidytable)
+downloads](https://cranlogs.r-pkg.org/badges/last-month/tidytable?color=grey)](https://markfairbanks.github.io/tidytable/)
 <!-- badges: end -->
 
 The goal of `tidytable` is to be a tidy interface to `data.table`.
@@ -48,9 +48,6 @@ devtools::install_github("markfairbanks/tidytable")
 
 ## tidytable functions
 
-**Enhanced selection support denoted by ES** [See examples
-here](https://markfairbanks.github.io/tidytable/#enhanced-selection)
-
 ### tidytable helpers
 
   - `dt()`: Pipeable `data.table` syntax. [See
@@ -64,11 +61,11 @@ here](https://markfairbanks.github.io/tidytable/#enhanced-selection)
 
   - `arrange.()`
   - `filter.()`
-  - `mutate.()` & `mutate_across.()` - **ES**
+  - `mutate.()` & `mutate_across.()`
       - The `_across.()` helper is new and can replace the
         `_if.()`/`_at.()`/`_all.()` helpers [See
         here](https://markfairbanks.github.io/tidytable/#new-variant-dt_mutate_across)
-  - `select.()` - **ES**
+  - `select.()`
   - `summarize.()`: Group by specifications called inside. [See
     here](https://markfairbanks.github.io/tidytable/#using-group-by)
 
@@ -76,19 +73,16 @@ here](https://markfairbanks.github.io/tidytable/#enhanced-selection)
 
   - `bind_cols.()` & `bind_rows.()`
   - `case.()`: Similar to `dplyr::case_when()`. See `?case.` for syntax
-  - `count.()` - **ES**
-  - `distinct.()` - **ES**
+  - `count.()`
+  - `distinct.()`
   - `ifelse.()`
   - Joins:
       - `left_join.()`, `inner_join.()`, `right_join.()`,
         `full_join.()`, & `anti_join.()`
   - `pull.()`
   - `relocate.()`
-  - `rename.()` & `rename_with.()` - **ES**
+  - `rename.()` & `rename_with.()`
   - `row_number.()`
-  - Select helpers:
-      - `any_of.()`, `contains.()`, `everything.()` `starts_with.()`,
-        `ends_with.()`
   - `slice.()`: `_head.()`/`_tail.()`/`_max.()`/`_min.()`
       - The `slice_*()` helpers are like `top_n.()`, but are a bit
         easier to use
@@ -97,14 +91,15 @@ here](https://markfairbanks.github.io/tidytable/#enhanced-selection)
 
 ### tidyr
 
-  - `drop_na.()` - **ES**
+  - `drop_na.()`
   - `fill.()`: Works on character/factor/logical types
-    (`data.table::nafill()` does not) - **ES**
-  - `group_split.()` - **ES**
-  - Nesting: `nest_by.()` - **ES** & `unnest.()`
-  - `pivot_longer.()` - **ES** & `pivot_wider.()` - **ES**
+    (`data.table::nafill()` does not)
+  - `group_split.()`
+  - Nesting: `nest_by.()` & `unnest.()`
+  - `pivot_longer.()` & `pivot_wider.()`
   - `replace_na.()`
   - `separate.()`
+  - `unite.()`
 
 ### purrr
 
@@ -139,11 +134,9 @@ Group by calls are done from inside any function that has group by
 functionality (such as `summarize.()` & `mutate.()`)
 
   - A single column can be passed with `by = z`
-  - Multiple columns can be passed with `by = c(y, z)` or `by = list(y,
-    z)`
-  - [Enhanced
-    selection](https://markfairbanks.github.io/tidytable/#enhanced-selection)
-    can also be used:
+  - Multiple columns can be passed with `by = c(y, z)`
+  - [`tidyselect`](https://tidyselect.r-lib.org) can also be used,
+    including using predicates:
       - Single predicate: `by = is.character`
       - Multiple predicates: `by = c(is.character, is.factor)`
       - A combination of predicates and column names: `by =
@@ -162,10 +155,12 @@ test_df %>%
 #> 2:     b   3.0     1
 ```
 
-## Enhanced selection
+## `tidyselect` support
 
-Enhanced selection allows you to mix predicates like `is.numeric` with
-normal selection.
+`tidyselect` allows you to mix predicates like `is.numeric` with normal
+selection. This includes the ability to use `tidyselect` helpers:
+`everything()`, `starts_with()`, `ends_with()`, `contains()`,
+`any_of()`, etc.
 
 ``` r
 test_df <- data.table(a = c(1,2,3),
@@ -194,17 +189,14 @@ test_df %>%
 #> 3:     b     c
 ```
 
-Currently supported predicates:
-`is.numeric`/`is.integer`/`is.double`/`is.character`/`is.factor`/`is.list`
-
-Functions that support enhanced selection will be noted in their
-documentation.
+These same ideas can be used whenever selecting columns in `tidytable`
+functions - for example when using `count.()`, `drop_na.()`,
+`pivot_longer.()`, `pivot_wider()`, etc.
 
 #### New helper: `mutate_across.()`
 
-Enhanced selection allows the user to replace `mutate_if.()`,
-`mutate_at.()`, and `mutate_all.()` with one helper -
-`mutate_across.()`.
+`tidyselect` allows the user to replace `mutate_if.()`, `mutate_at.()`,
+and `mutate_all.()` with one helper - `mutate_across.()`.
 
 Using `_across.()` instead of `_if.()`:
 
@@ -239,7 +231,7 @@ Using `_across.()` instead of `_all.()`:
 
 ``` r
 test_df %>%
-  mutate_across.(everything.(), as.factor)
+  mutate_across.(everything(), as.factor)
 #>        a     b     c     d
 #>    <fct> <fct> <fct> <fct>
 #> 1:     1     1     a     a
@@ -353,17 +345,17 @@ all_marks
 #> # A tibble: 13 x 6
 #>    function_tested tidyverse tidytable data.table pandas tidytable_vs_tidyverse
 #>    <chr>           <chr>     <chr>     <chr>      <chr>  <chr>                 
-#>  1 arrange         391.2ms   38.7ms    36.3ms     297ms  9.9%                  
-#>  2 case_when       509ms     154ms     139ms      307ms  30.3%                 
-#>  3 distinct        86.6ms    20.6ms    16.8ms     287ms  23.8%                 
-#>  4 fill            112.4ms   34.3ms    31.6ms     146ms  30.5%                 
-#>  5 filter          274ms     214ms     212ms      656ms  78.1%                 
-#>  6 inner_join      79.3ms    65.5ms    58.8ms     <NA>   82.6%                 
-#>  7 left_join       72.5ms    39.3ms    45.7ms     <NA>   54.2%                 
-#>  8 mutate          69.8ms    51ms      78.3ms     85.2ms 73.1%                 
-#>  9 nest            28.08ms   7.22ms    8.01ms     <NA>   25.7%                 
-#> 10 pivot_longer    42.5ms    11ms      12ms       <NA>   25.9%                 
-#> 11 pivot_wider     83.3ms    67.1ms    69.9ms     <NA>   80.6%                 
-#> 12 summarize       466ms     100ms     174ms      780ms  21.5%                 
-#> 13 unnest          161.56ms  8.74ms    7.04ms     <NA>   5.4%
+#>  1 arrange         430.4ms   62.7ms    58.4ms     297ms  14.6%                 
+#>  2 case_when       400.8ms   103.6ms   72.2ms     307ms  25.8%                 
+#>  3 distinct        95ms      42.8ms    41.2ms     287ms  45.1%                 
+#>  4 fill            111.1ms   50.1ms    34.9ms     146ms  45.1%                 
+#>  5 filter          270ms     266ms     241ms      656ms  98.5%                 
+#>  6 inner_join      63.6ms    76.7ms    69.7ms     <NA>   120.6%                
+#>  7 left_join       87.5ms    67.9ms    72.2ms     <NA>   77.6%                 
+#>  8 mutate          63.6ms    51.1ms    47.3ms     85.2ms 80.3%                 
+#>  9 nest            29.6ms    18.4ms    16.4ms     <NA>   62.2%                 
+#> 10 pivot_longer    44.4ms    15.6ms    13.1ms     <NA>   35.1%                 
+#> 11 pivot_wider     105ms     132ms     118ms      <NA>   125.7%                
+#> 12 summarize       461ms     168ms     271ms      780ms  36.4%                 
+#> 13 unnest          816.16ms  21.94ms   6.23ms     <NA>   2.7%
 ```

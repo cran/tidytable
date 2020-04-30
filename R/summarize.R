@@ -8,7 +8,7 @@
 #' @param by Columns to group by.
 #' * A single column can be passed with `by = d`.
 #' * Multiple columns can be passed with `by = c(c, d)` or `by = list(c, d)`
-#' * Enhanced selection can be used:
+#' * `tidyselect` can be used:
 #'   + Single predicate: `by = is.character`
 #'   + Multiple predicates: `by = c(is.character, is.factor)`
 #'   + A combination of predicates and column names: `by = c(is.character, b)`
@@ -29,13 +29,15 @@
 #'
 #' example_dt %>%
 #'   summarize.(avg_a = mean(a),
-#'                by = c(c, d))
+#'              by = c(c, d))
 summarize. <- function(.data, ..., by = NULL) {
   UseMethod("summarize.")
 }
 
 #' @export
-summarize..tidytable <- function(.data, ..., by = NULL) {
+summarize..data.frame <- function(.data, ..., by = NULL) {
+
+  .data <- as_tidytable(.data)
 
   dots <- enexprs(...)
   by <- enexpr(by)
@@ -48,14 +50,6 @@ summarize..tidytable <- function(.data, ..., by = NULL) {
   eval_expr(
     .data[, list(!!!dots), by = !!by]
   )
-}
-
-#' @export
-summarize..data.frame <- function(.data, ..., by = NULL) {
-  .data <- as_tidytable(.data)
-  by <- enexpr(by)
-
-  summarize.(.data, ..., by = !!by)
 }
 
 #' @export

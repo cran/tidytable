@@ -2,33 +2,35 @@
 #'
 #' @description
 #' This function allows you to use multiple if/else statements in one call.
-#' Note that this function is called differently than `dplyr::case_when`! See examples
+#'
+#' Note that this function is called differently than `dplyr::case_when`. See examples.
 #'
 #' @param ... Sequence of condition/value designations
-#' @param default Default value. Set to NA. Argument must be named.
+#' @param default Default value. Set to NA by default.
 #'
 #' @export
 #'
 #' @examples
 #' library(data.table)
 #'
-#' test_df <- data.table::data.table(
+#' test_df <- tidytable(
 #'   a = 1:10,
 #'   b = 11:20,
 #'   c = c(rep("a", 6), rep("b", 4)),
 #'   d = c(rep("a", 4), rep("b", 6)))
 #'
 #' test_df %>%
-#'   dt_mutate(x = dt_case(b < 13, 3,
-#'                         a > 4, 2,
-#'                         default = 10))
+#'   mutate.(x = case.(b < 13, 3,
+#'                     a > 4, 2,
+#'                     default = 10))
 #' test_df %>%
-#'   dt_mutate(x = dt_case(c == "a","a",
-#'                         default = d))
+#'   mutate.(x = case.(c == "a", "a",
+#'                     default = d))
 case. <- function(..., default = NA) {
   dots <- enexprs(...)
+  dots_length <- length(dots)
 
-  index <- '+'(1, 1:length(dots)) %% 2
+  index <- '+'(1, 1:dots_length) %% 2
 
   conditions <- dots[index == 0]
   values <- dots[index == 1]
@@ -39,30 +41,16 @@ case. <- function(..., default = NA) {
   if (length(conditions) != length(values))
     abort("The length of conditions does not equal the length values")
 
-  if (length(default) == 1) {
-    if (is.na(default)) {
-      na_class <- class(values[[1]])
-      if (na_class == "logical") {
-        default <- NA
-      } else if (na_class == "complex") {
-        default <- NA_complex_
-      } else if (na_class == "integer") {
-        default <- NA_integer_
-      } else if (na_class == "character") {
-        default <- NA_character_
-      } else {
-        default <- NA_real_
-      }
-    }
+  calls <- default
+
+  for (i in rev(seq_along(conditions))) {
+    change_flag <- fifelse(eval(conditions[[i]], parent.frame()),
+                           TRUE, FALSE, FALSE)
+
+    calls <- call("ifelse.", change_flag, values[[i]], calls)
   }
 
-  vals <- default
-
-  for (i in seq_along(conditions)) {
-    vals <- fifelse(eval(conditions[[i]], parent.frame()), eval(values[[i]], parent.frame()), vals)
-  }
-
-  vals
+  eval(calls, envir = parent.frame())
 }
 
 #' @export

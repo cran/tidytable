@@ -5,10 +5,11 @@
 #'
 #' @param .data A data.table or data.frame
 #' @param .fn Function to transform the names with.
-#' @param .cols Columns to rename. Defaults to all columns.
+#' @param .cols Columns to rename. Defaults to all columns. `tidyselect` compatible.
 #' @param ... Other parameters to pass to the function
 #'
 #' @export
+#' @md
 #'
 #' @examples
 #' example_dt <- data.table::data.table(
@@ -27,7 +28,9 @@ rename_with. <- function(.data, .fn, .cols = everything.(), ...) {
 }
 
 #' @export
-rename_with..tidytable <- function(.data, .fn, .cols = everything.(), ...) {
+rename_with..data.frame <- function(.data, .fn, .cols = everything.(), ...) {
+
+  .data <- as_tidytable(.data)
 
   .cols <- enexpr(.cols)
   .cols <- as.character(vec_selector(.data, !!.cols))
@@ -45,14 +48,6 @@ rename_with..tidytable <- function(.data, .fn, .cols = everything.(), ...) {
   } else {
     .data
   }
-}
-
-#' @export
-rename_with..data.frame <- function(.data, .fn, .cols = everything.(), ...) {
-  .data <- as_tidytable(.data)
-  .cols <- enexpr(.cols)
-
-  rename_with.(.data, .fn = .fn, .cols = !!.cols, ...)
 }
 
 #' @export

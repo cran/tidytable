@@ -5,22 +5,25 @@
 \alias{dt_distinct}
 \title{Select distinct/unique rows}
 \usage{
-distinct.(.data, ...)
+distinct.(.data, ..., .keep_all = FALSE)
 
-dt_distinct(.data, ...)
+dt_distinct(.data, ..., .keep_all = FALSE)
 }
 \arguments{
 \item{.data}{A data.frame or data.table}
 
-\item{...}{Columns to select before determining uniqueness. If omitted, will use all columns}
+\item{...}{Columns to select before determining uniqueness. If omitted, will use all columns.
+\code{tidyselect} compatible.}
+
+\item{.keep_all}{Only relevant if columns are provided to ... arg.
+This keeps all columns, but only keeps the first row of each distinct
+values of columns provided to ... arg.}
 }
 \description{
 Retain only unique/distinct rows from an input df.
-
-Supports enhanced selection if dots are used
 }
 \examples{
-example_dt <- data.table::data.table(
+example_dt <- tidytable(
   x = 1:3,
   y = 4:6,
   z = c("a", "a", "b"))

@@ -3,12 +3,13 @@
 #' @description
 #' Select or drop columns from a data.table
 #'
-#' Supports enhanced selection
-#'
 #' @param .data A data.frame or data.table
-#' @param ... Columns to select or drop
+#' @param ... Columns to select or drop.
+#' Use named arguments, e.g. new_name = old_name, to rename selected variables.
+#' `tidyselect` compatible.
 #'
 #' @export
+#' @md
 #'
 #' @examples
 #' example_dt <- data.table::data.table(
@@ -31,26 +32,25 @@
 #'
 #' example_dt %>%
 #'   select.(is.character, x)
+#'
+#' example_dt %>%
+#'   select.(stuff = x, y)
 select. <- function(.data, ...) {
   UseMethod("select.")
 }
 
 #' @export
-select..tidytable <- function(.data, ...) {
-
-  select_cols <- as.character(dots_selector(.data, ...))
-
-  # Using a character vector is faster for select
-  eval_expr(
-    .data[, !!select_cols]
-  )
-}
-
-#' @export
 select..data.frame <- function(.data, ...) {
+
   .data <- as_tidytable(.data)
 
-  select.(.data, ...)
+  select_cols <- dots_selector_i(.data, ...)
+
+  .data <- eval_expr(.data[, !!select_cols])
+
+  .data <- set_names(.data, names(select_cols))
+
+  .data
 }
 
 #' @export

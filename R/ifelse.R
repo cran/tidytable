@@ -7,6 +7,7 @@
 #' @param conditions Conditions to test on
 #' @param true Values to return if conditions evaluate to TRUE
 #' @param false Values to return if conditions evaluate to FALSE
+#' @param na Value to return if an element of test is NA.
 #'
 #' @md
 #' @export
@@ -20,12 +21,20 @@
 #'
 #' test_df %>%
 #'   mutate.(new_col = ifelse.(x > 2L, NA, x - 1L))
-ifelse. <- function(conditions, true, false) {
+ifelse. <- function(conditions, true, false, na = NA) {
 
-  if (length(true) == 1)
-    if(is.na(true)) true <- as(true, class(false))
+  true <- true
+  false <- false
+  na <- na
 
-  case.(conditions, true, default = false)
+  vec_assert(conditions, logical())
+  ptype <- vec_ptype_common(true, false, na)
+
+  true <- vec_cast(true, ptype)
+  false <- vec_cast(false, ptype)
+  na <- vec_cast(na, ptype)
+
+  fifelse(conditions, true, false, na = na)
 }
 
 #' @export

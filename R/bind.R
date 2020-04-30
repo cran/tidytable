@@ -1,10 +1,12 @@
 #' Bind data.tables by row and column
 #'
 #' @description
-#' Bind rows or columns together.
+#' Bind multiple data.tables into one row-wise or col-wise.
 #'
 #' @param ... data.tables or data.frames to bind
 #' @param .id If TRUE, an integer column is made as a group id
+#' @param use.names If TRUE, makes sure column names align
+#' @param fill If TRUE, fills missing columns with NA
 #'
 #' @export
 #' @md
@@ -22,20 +24,20 @@
 #'   bind_cols.(df2)
 #'
 #' bind_cols.(list(df1, df2))
-bind_rows. <- function(..., .id = NULL) {
+bind_rows. <- function(..., .id = NULL, use.names = TRUE, fill = TRUE) {
   UseMethod("bind_rows.")
 }
 
 #' @export
-bind_rows..default <- function(..., .id = NULL) {
+bind_rows..default <- function(..., .id = NULL, use.names = TRUE, fill = TRUE) {
 
   dots <- list(...)
   dots <- squash(dots)
 
-  if (!all(dt_map_lgl(dots, is.data.table)))
-    dots <- dt_map(dots, as_tidytable)
+  if (!all(map_lgl.(dots, is.data.table)))
+    dots <- map.(dots, as_tidytable)
 
-  dots <- rbindlist(dots, idcol = .id)
+  dots <- rbindlist(dots, idcol = .id, use.names = use.names, fill = fill)
 
   as_tidytable(dots)
 }
@@ -56,8 +58,8 @@ bind_cols..default <- function(...) {
   dots <- list(...)
   dots <- squash(dots)
 
-  if (!all(dt_map_lgl(dots, is.data.table)))
-    dots <- dt_map(dots, as_tidytable)
+  if (!all(map_lgl.(dots, is.data.table)))
+    dots <- map.(dots, as_tidytable)
 
   as_tidytable(name_fix(setDT(unlist(dots, recursive = FALSE), check.names = FALSE)[]))
 
@@ -71,7 +73,7 @@ name_fix <- function(.data) {
 
   col_names <- names(.data)
 
-  dupe_count <- dt_map_dbl(seq_along(col_names), function(i) sum(col_names[i] == col_names[1:i]))
+  dupe_count <- map_dbl.(seq_along(col_names), ~ sum(col_names[.x] == col_names[1:.x]))
 
   col_names[dupe_count > 1] <- paste0(
     col_names[dupe_count > 1],

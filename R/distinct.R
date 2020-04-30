@@ -3,15 +3,18 @@
 #' @description
 #' Retain only unique/distinct rows from an input df.
 #'
-#' Supports enhanced selection if dots are used
-#'
 #' @param .data A data.frame or data.table
-#' @param ... Columns to select before determining uniqueness. If omitted, will use all columns
+#' @param ... Columns to select before determining uniqueness. If omitted, will use all columns.
+#' `tidyselect` compatible.
+#' @param .keep_all Only relevant if columns are provided to ... arg.
+#' This keeps all columns, but only keeps the first row of each distinct
+#' values of columns provided to ... arg.
 #'
 #' @export
+#' @md
 #'
 #' @examples
-#' example_dt <- data.table::data.table(
+#' example_dt <- tidytable(
 #'   x = 1:3,
 #'   y = 4:6,
 #'   z = c("a", "a", "b"))
@@ -21,27 +24,28 @@
 #'
 #' example_dt %>%
 #'   distinct.(z)
-distinct. <- function(.data, ...) {
+distinct. <- function(.data, ..., .keep_all = FALSE) {
   UseMethod("distinct.")
 }
 
 #' @export
-distinct..tidytable <- function(.data, ...) {
+distinct..data.frame <- function(.data, ..., .keep_all = FALSE) {
+
+  .data <- as_tidytable(.data)
 
   dots <- enexprs(...)
 
   if (length(dots) == 0) {
     unique(.data)
+  } else if (!.keep_all) {
+    select_cols <- dots_selector_i(.data, ...)
+
+    unique(.data, by = select_cols)[, ..select_cols]
   } else {
-    unique(dt_select(.data, ...))
+    select_cols <- dots_selector_i(.data, ...)
+
+    unique(.data, by = select_cols)
   }
-}
-
-#' @export
-distinct..data.frame <- function(.data, ...) {
-  .data <- as_tidytable(.data)
-
-  distinct.(.data, ...)
 }
 
 #' @export
