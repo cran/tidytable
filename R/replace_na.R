@@ -12,18 +12,18 @@
 #' @md
 #'
 #' @examples
-#' example_dt <- data.table::data.table(
+#' test_df <- data.table(
 #'   x = c(1, 2, NA),
 #'   y = c(NA, 1, 2))
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   mutate.(x = replace_na.(x, 5))
 replace_na. <- function(.col, replace) {
 
   if (class(replace) %in% c("integer", "double", "numeric")) {
     nafill(.col, "const", fill = replace)
   } else {
-    fifelse(is.na(.col), replace, .col)
+    ifelse.(is.na(.col), replace, .col)
   }
 }
 

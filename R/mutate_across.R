@@ -3,8 +3,8 @@
 #' @description
 #' Mutate multiple columns simultaneously.
 #'
-#' @param .data A data.frame or data.table
-#' @param .cols vector `c()` of bare column names for `mutate_across.()` to use.
+#' @param .df A data.frame or data.table
+#' @param .cols vector `c()` of unquoted column names
 #' `tidyselect` compatible.
 #' @param .fns Functions to pass. Can pass a list of functions.
 #' @param ... Other arguments for the passed function
@@ -14,47 +14,45 @@
 #' @md
 #'
 #' @examples
-#' example_dt <- data.table::data.table(
+#' test_df <- data.table(
 #'   x = c(1,1,1),
 #'   y = c(2,2,2),
 #'   z = c("a", "a", "b"))
 #'
-#' example_dt %>%
-#'   mutate_across.(is.numeric, as.character)
+#' test_df %>%
+#'   mutate_across.(where(is.numeric), as.character)
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   mutate_across.(c(x, y), ~ .x * 2)
 #'
-#' example_dt %>%
-#'   mutate_across.(everything.(), as.character)
+#' test_df %>%
+#'   mutate_across.(everything(), as.character)
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   mutate_across.(c(x, y), list(new = ~ .x * 2,
 #'                                another = ~ .x + 7))
-mutate_across. <- function(.data, .cols = everything.(), .fns, ..., by = NULL) {
+mutate_across. <- function(.df, .cols = everything(), .fns, ..., by = NULL) {
   UseMethod("mutate_across.")
 }
 
 #' @export
-mutate_across..data.frame <- function(.data, .cols = everything.(), .fns, ..., by = NULL) {
+mutate_across..data.frame <- function(.df, .cols = everything(), .fns, ..., by = NULL) {
 
-  .data <- as_tidytable(.data)
+  .df <- as_tidytable(.df)
 
-  .cols <- enexpr(.cols)
-  .cols <- as.character(vec_selector(.data, !!.cols))
+  .cols <- select_vec_chr(.df, {{ .cols }})
 
-  by <- enexpr(by)
-  by <- vec_selector_by(.data, !!by)
+  by <- select_vec_by(.df, {{ by }})
 
-  .data <- shallow(.data)
+  .df <- shallow(.df)
 
   if (!is.list(.fns)) {
     if (length(.cols) > 0) {
-      eval_expr(
-        .data[, (.cols) := map.(.SD, .fns, ...), .SDcols = .cols, by = !!by]
-      )
+      eval_quo(
+        .df[, (.cols) := eval_quo(map.(.SD, .fns, ...), .SD), .SDcols = .cols, by = !!by],
+        .df)
     } else {
-      .data
+      .df
     }
   } else {
 
@@ -65,12 +63,12 @@ mutate_across..data.frame <- function(.data, .cols = everything.(), .fns, ..., b
     for (i in seq_along(new_names)) {
       new_cols <-  paste0(.cols, "_", new_names[[i]])
 
-      eval_expr(
-        .data[, (new_cols) := map.(.SD, .fns[[i]]), .SDcols = .cols, by = !!by]
-      )
+      eval_quo(
+        .df[, (new_cols) := eval_quo(map.(.SD, .fns[[i]]), .SD), .SDcols = .cols, by = !!by],
+        .df)
     }
   }
-  .data[]
+  .df[]
 }
 
 #' @export

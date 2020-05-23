@@ -5,23 +5,26 @@
 \alias{dt_group_nest}
 \title{Nest data.tables}
 \usage{
-nest_by.(.data, ..., .key = "data")
+nest_by.(.df, ..., .key = "data", .keep = FALSE)
 
-dt_group_nest(.data, ..., .key = "data")
+dt_group_nest(.df, ..., .key = "data", .keep = FALSE)
 }
 \arguments{
-\item{.data}{A data.frame or data.table}
+\item{.df}{A data.frame or data.table}
 
 \item{...}{Columns to group by. If empty nests the entire data.table.
 \code{tidyselect} compatible.}
 
-\item{.key}{Name of the new column created by nesting}
+\item{.key}{Name of the new column created by nesting.}
+
+\item{.keep}{Should the grouping columns be kept in the list column.}
 }
 \description{
 Nest data.tables by group
 }
 \examples{
-test_df <- data.table::data.table(a = 1:10,
+test_df <- data.table(
+  a = 1:10,
   b = 11:20,
   c = c(rep("a", 6), rep("b", 4)),
   d = c(rep("a", 4), rep("b", 6)))
@@ -33,5 +36,8 @@ test_df \%>\%
   nest_by.(c, d)
 
 test_df \%>\%
-  nest_by.(is.character)
+  nest_by.(where(is.character))
+
+test_df \%>\%
+  nest_by.(c, d, .keep = TRUE)
 }

@@ -3,7 +3,7 @@
 #' @description
 #' Select or drop columns from a data.table
 #'
-#' @param .data A data.frame or data.table
+#' @param .df A data.frame or data.table
 #' @param ... Columns to select or drop.
 #' Use named arguments, e.g. new_name = old_name, to rename selected variables.
 #' `tidyselect` compatible.
@@ -12,45 +12,45 @@
 #' @md
 #'
 #' @examples
-#' example_dt <- data.table::data.table(
+#' test_df <- data.table(
 #'   x = c(1,1,1),
 #'   y = c(4,5,6),
 #'   double_x = c(2,2,2),
 #'   z = c("a","a","b"))
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   select.(x, y)
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   select.(x:z)
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   select.(-y, -z)
 #'
-#' example_dt %>%
-#'   select.(starts_with.("x"), z)
+#' test_df %>%
+#'   select.(starts_with("x"), z)
 #'
-#' example_dt %>%
-#'   select.(is.character, x)
+#' test_df %>%
+#'   select.(where(is.character), x)
 #'
-#' example_dt %>%
+#' test_df %>%
 #'   select.(stuff = x, y)
-select. <- function(.data, ...) {
+select. <- function(.df, ...) {
   UseMethod("select.")
 }
 
 #' @export
-select..data.frame <- function(.data, ...) {
+select..data.frame <- function(.df, ...) {
 
-  .data <- as_tidytable(.data)
+  .df <- as_tidytable(.df)
 
-  select_cols <- dots_selector_i(.data, ...)
+  select_cols <- select_dots_i(.df, ...)
 
-  .data <- eval_expr(.data[, !!select_cols])
+  .df <- eval_quo(.df[, !!select_cols])
 
-  .data <- set_names(.data, names(select_cols))
+  .df <- set_names(.df, names(select_cols))
 
-  .data
+  .df
 }
 
 #' @export

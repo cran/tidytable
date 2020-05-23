@@ -7,7 +7,7 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.4.1-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.5.0-green.svg)](https://github.com/markfairbanks/tidytable)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![CRAN RStudio mirror
@@ -79,6 +79,7 @@ devtools::install_github("markfairbanks/tidytable")
   - Joins:
       - `left_join.()`, `inner_join.()`, `right_join.()`,
         `full_join.()`, & `anti_join.()`
+  - `lags.()` & `leads.()`
   - `pull.()`
   - `relocate.()`
   - `rename.()` & `rename_with.()`
@@ -110,7 +111,6 @@ devtools::install_github("markfairbanks/tidytable")
 `tidytable` uses `verb.()` syntax to replicate `tidyverse` functions:
 
 ``` r
-library(data.table)
 library(tidytable)
 
 test_df <- data.table(x = c(1,2,3), y = c(4,5,6), z = c("a","a","b"))
@@ -135,12 +135,13 @@ functionality (such as `summarize.()` & `mutate.()`)
 
   - A single column can be passed with `by = z`
   - Multiple columns can be passed with `by = c(y, z)`
-  - [`tidyselect`](https://tidyselect.r-lib.org) can also be used,
-    including using predicates:
-      - Single predicate: `by = is.character`
-      - Multiple predicates: `by = c(is.character, is.factor)`
+  - [`tidyselect`](https://tidyselect.r-lib.org/reference/language.html)
+    can also be used, including using predicates:
+      - Single predicate: `by = where(is.character)`
+      - Multiple predicates: `by = c(where(is.character),
+        where(is.factor))`
       - A combination of predicates and column names: `by =
-        c(is.character, y)`
+        c(where(is.character), y)`
 
 <!-- end list -->
 
@@ -157,10 +158,16 @@ test_df %>%
 
 ## `tidyselect` support
 
-`tidyselect` allows you to mix predicates like `is.numeric` with normal
-selection. This includes the ability to use `tidyselect` helpers:
-`everything()`, `starts_with()`, `ends_with()`, `contains()`,
-`any_of()`, etc.
+`tidytable` allows you to select/drop columns just like you would in the
+tidyverse.
+
+Normal selection can be mixed with:
+
+  - Predicates: `where(is.numeric)`, `where(is.character)`, etc.
+  - Select helpers: `everything()`, `starts_with()`, `ends_with()`,
+    `contains()`, `any_of()`, etc.
+
+<!-- end list -->
 
 ``` r
 test_df <- data.table(a = c(1,2,3),
@@ -169,7 +176,7 @@ test_df <- data.table(a = c(1,2,3),
                       d = c("a","b","c"))
 
 test_df %>%
-  select.(is.numeric, d)
+  select.(where(is.numeric), d)
 #>        a     b     d
 #>    <dbl> <dbl> <chr>
 #> 1:     1     4     a
@@ -181,7 +188,7 @@ You can also use this format to drop columns:
 
 ``` r
 test_df %>%
-  select.(-is.numeric)
+  select.(-where(is.numeric))
 #>        c     d
 #>    <chr> <chr>
 #> 1:     a     a
@@ -191,7 +198,7 @@ test_df %>%
 
 These same ideas can be used whenever selecting columns in `tidytable`
 functions - for example when using `count.()`, `drop_na.()`,
-`pivot_longer.()`, `pivot_wider()`, etc.
+`pivot_longer.()`, `pivot_wider.()`, etc.
 
 #### New helper: `mutate_across.()`
 
@@ -207,7 +214,7 @@ test_df <- data.table(a = c(1,1,1),
                       d = c("a","b","c"))
 
 test_df %>%
-  mutate_across.(is.numeric, as.character)
+  mutate_across.(where(is.numeric), as.character)
 #>        a     b     c     d
 #>    <chr> <chr> <chr> <chr>
 #> 1:     1     1     a     a
@@ -241,24 +248,27 @@ test_df %>%
 
 ## `rlang` compatibility
 
-`rlang` quoting/unquoting can be used to write custom functions with
-`tidytable` functions.
-
-Note that quosures are not compatible with `data.table`, so `enexpr()`
-must be used instead of `enquo()`.
+`rlang` can be used to write custom functions with `tidytable`
+functions.
 
 ##### Custom function with `mutate.()`
 
 ``` r
-library(rlang)
-
 df <- data.table(x = c(1,1,1), y = c(1,1,1), z = c("a","a","b"))
 
-add_one <- function(.data, add_col) {
-  add_col <- enexpr(add_col)
+# Using enquo() with !!
+add_one <- function(data, add_col) {
   
-  .data %>%
+  add_col <- enquo(add_col)
+  
+  data %>%
     mutate.(new_col = !!add_col + 1)
+}
+
+# Using the {{ }} shortcut
+add_one <- function(data, add_col) {
+  data %>%
+    mutate.(new_col = {{add_col}} + 1)
 }
 
 df %>%
@@ -275,13 +285,10 @@ df %>%
 ``` r
 df <- data.table(x = 1:10, y = c(rep("a", 6), rep("b", 4)), z = c(rep("a", 6), rep("b", 4)))
 
-find_mean <- function(.data, grouping_cols, col) {
-  grouping_cols <- enexpr(grouping_cols)
-  col <- enexpr(col)
-  
-  .data %>%
-    summarize.(avg = mean(!!col),
-               by = !!grouping_cols)
+find_mean <- function(data, grouping_cols, col) {
+  data %>%
+    summarize.(avg = mean({{col}}),
+               by = {{grouping_cols}})
 }
 
 df %>%
@@ -290,6 +297,23 @@ df %>%
 #>    <chr> <chr> <dbl>
 #> 1:     a     a   3.5
 #> 2:     b     b   8.5
+```
+
+## Auto-conversion
+
+All `tidytable` functions automatically convert `data.frame` and
+`tibble` inputs to a `data.table`:
+
+``` r
+library(dplyr)
+library(data.table)
+
+test_df <- tibble(x = c(1,2,3), y = c(4,5,6), z = c("a","a","b"))
+
+test_df %>%
+  mutate.(double_x = x * 2) %>%
+  is.data.table()
+#> [1] TRUE
 ```
 
 ## `dt()` helper
@@ -343,19 +367,19 @@ A few notes:
 ``` r
 all_marks
 #> # A tibble: 13 x 6
-#>    function_tested tidyverse tidytable data.table pandas tidytable_vs_tidyverse
-#>    <chr>           <chr>     <chr>     <chr>      <chr>  <chr>                 
-#>  1 arrange         430.4ms   62.7ms    58.4ms     297ms  14.6%                 
-#>  2 case_when       400.8ms   103.6ms   72.2ms     307ms  25.8%                 
-#>  3 distinct        95ms      42.8ms    41.2ms     287ms  45.1%                 
-#>  4 fill            111.1ms   50.1ms    34.9ms     146ms  45.1%                 
-#>  5 filter          270ms     266ms     241ms      656ms  98.5%                 
-#>  6 inner_join      63.6ms    76.7ms    69.7ms     <NA>   120.6%                
-#>  7 left_join       87.5ms    67.9ms    72.2ms     <NA>   77.6%                 
-#>  8 mutate          63.6ms    51.1ms    47.3ms     85.2ms 80.3%                 
-#>  9 nest            29.6ms    18.4ms    16.4ms     <NA>   62.2%                 
-#> 10 pivot_longer    44.4ms    15.6ms    13.1ms     <NA>   35.1%                 
-#> 11 pivot_wider     105ms     132ms     118ms      <NA>   125.7%                
-#> 12 summarize       461ms     168ms     271ms      780ms  36.4%                 
-#> 13 unnest          816.16ms  21.94ms   6.23ms     <NA>   2.7%
+#>    function_tested data.table tidytable tidyverse pandas tidytable_vs_tidyverse
+#>    <chr>           <chr>      <chr>     <chr>     <chr>  <chr>                 
+#>  1 arrange         59.58ms    64.61ms   451.53ms  355ms  14.3%                 
+#>  2 case_when       74.13ms    67.33ms   419.69ms  59.2ms 16.0%                 
+#>  3 distinct        42.08ms    42.55ms   106.55ms  309ms  39.9%                 
+#>  4 fill            43.03ms    46.88ms   136.04ms  846ms  34.5%                 
+#>  5 filter          236.47ms   231.46ms  296.91ms  707ms  78.0%                 
+#>  6 inner_join      89.06ms    107.27ms  79.85ms   <NA>   134.3%                
+#>  7 left_join       66.25ms    73.97ms   86.29ms   <NA>   85.7%                 
+#>  8 mutate          63.37ms    70.61ms   60.67ms   86.4ms 116.4%                
+#>  9 nest            14.98ms    16.28ms   36.14ms   <NA>   45.0%                 
+#> 10 pivot_longer    13.73ms    14.89ms   53.92ms   <NA>   27.6%                 
+#> 11 pivot_wider     111ms      120.63ms  81.77ms   <NA>   147.5%                
+#> 12 summarize       292.95ms   273.02ms  505.77ms  834ms  54.0%                 
+#> 13 unnest          26.67ms    21.53ms   939.83ms  <NA>   2.3%
 ```

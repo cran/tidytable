@@ -5,22 +5,22 @@
 \alias{dt_group_split}
 \title{Split data frame by groups}
 \usage{
-group_split.(.data, ..., keep = TRUE)
+group_split.(.df, ..., .keep = TRUE)
 
-dt_group_split(.data, ..., keep = TRUE)
+dt_group_split(.df, ..., .keep = TRUE)
 }
 \arguments{
-\item{.data}{A data.frame or data.table}
+\item{.df}{A data.frame or data.table}
 
 \item{...}{Columns to group and split by. \code{tidyselect} compatible.}
 
-\item{keep}{Should the grouping columns be kept}
+\item{.keep}{Should the grouping columns be kept}
 }
 \description{
 Split data frame by groups. Returns a list.
 }
 \examples{
-test_df <- data.table::data.table(
+test_df <- tidytable(
   a = 1:5,
   b = 1:5,
   c = c("a","a","a","b","b"),
@@ -30,5 +30,5 @@ test_df \%>\%
   group_split.(c, d)
 
 test_df \%>\%
-  group_split.(c, d, keep = FALSE)
+  group_split.(c, d, .keep = FALSE)
 }
