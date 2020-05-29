@@ -1,6 +1,6 @@
 Package: tidytable
 Title: Tidy Interface to 'data.table'
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: 
     c(person(given = "Mark",
              family = "Fairbanks",
@@ -33,7 +33,7 @@ URL: https://github.com/markfairbanks/tidytable
 BugReports: https://github.com/markfairbanks/tidytable/issues
 Suggests: testthat (>= 2.1.0), bit64, knitr
 NeedsCompilation: no
-Packaged: 2020-05-23 18:56:06 UTC; xmxf129
+Packaged: 2020-05-29 15:23:51 UTC; xmxf129
 Author: Mark Fairbanks [aut, cre],
   Tyson Barrett [ctb],
   Ivan Leung [ctb],
@@ -42,4 +42,4 @@ Author: Mark Fairbanks [aut, cre],
   Matt Carlson [ctb]
 Maintainer: Mark Fairbanks <mark.t.fairbanks@gmail.com>
 Repository: CRAN
-Date/Publication: 2020-05-23 19:10:02 UTC
+Date/Publication: 2020-05-29 15:40:03 UTC

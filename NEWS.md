@@ -1,3 +1,10 @@
+# tidytable 0.5.1
+
+* New functions:
+  + `summarize_across.()` & `summarise_across.()`
+* Bug fixes:
+  + Fixed `distinct.()` bug where it wasn't returning unique rows
+
 # tidytable 0.5.0
 
 * `tidytable` now works with quosures
