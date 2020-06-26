@@ -33,6 +33,8 @@ distinct..data.frame <- function(.df, ..., .keep_all = FALSE) {
 
   .df <- as_tidytable(.df)
 
+  vec_assert(.keep_all, logical(), 1)
+
   dots <- enquos(...)
 
   if (length(dots) == 0) {
@@ -54,4 +56,8 @@ distinct..data.frame <- function(.df, ..., .keep_all = FALSE) {
 
 #' @export
 #' @rdname distinct.
-dt_distinct <- distinct.
+dt_distinct <- function(.df, ..., .keep_all = FALSE) {
+  deprecate_soft("0.5.2", "tidytable::dt_distinct()", "distinct.()")
+
+  distinct.(.df, ..., .keep_all = .keep_all)
+}

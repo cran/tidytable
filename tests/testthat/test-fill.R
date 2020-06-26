@@ -1,6 +1,8 @@
-test_that("dt_fill() missings are filled correctly", {
+test_that("dt_fill() missings are filled correctly & is deprecated", {
   # filled down from last non-missing
   df <- data.table::data.table(x = c(NA, 1, NA, 2, NA, NA))
+
+  expect_deprecated(dt_fill(df, x))
 
   out <- as_tidytable(df) %>% dt_fill(x)
   expect_equal(out$x, c(NA, 1, 1, 2, 2, 2))
@@ -95,7 +97,7 @@ test_that("doesn't modify-by-reference", {
 
 test_that("fill respects grouping & is correct order", {
   df <- data.table::data.table(x = c(1, NA, NA), y = c(1, 1, 2))
-  out <- fill.(df, x, by = y)
+  out <- fill.(df, x, .by = y)
 
   expect_named(out, c("x", "y"))
   expect_equal(out$x, c(1, 1, NA))

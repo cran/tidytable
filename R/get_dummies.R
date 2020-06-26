@@ -62,6 +62,11 @@ get_dummies..data.frame <- function(.df,
   .df <- as_tidytable(.df)
   .df <- shallow(.df)
 
+  vec_assert(prefix, logical(), 1)
+  vec_assert(prefix_sep, character(), 1)
+  vec_assert(drop_first, logical(), 1)
+  vec_assert(dummify_na, logical(), 1)
+
   cols <- select_vec_sym(.df, {{ cols }})
 
   for (col in cols) {
@@ -106,4 +111,14 @@ get_dummies..data.frame <- function(.df,
 
 #' @export
 #' @rdname get_dummies.
-dt_get_dummies <- get_dummies.
+dt_get_dummies <- function(.df,
+                           cols = c(where(is.character), where(is.factor)),
+                           prefix = TRUE,
+                           prefix_sep = "_",
+                           drop_first = FALSE,
+                           dummify_na = TRUE) {
+  deprecate_soft("0.5.2", "tidytable::dt_get_dummies()", "get_dummies.()")
+
+  get_dummies.(.df, cols = {{ cols }}, prefix = prefix, prefix_sep = prefix_sep,
+               drop_first = drop_first, dummify_na = dummify_na)
+}

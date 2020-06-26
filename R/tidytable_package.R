@@ -1,22 +1,21 @@
 # Suppress R CMD check note
 #' @import data.table
 #' @import tidyselect
-#' @importFrom lifecycle deprecate_soft
+#' @importFrom lifecycle deprecate_soft deprecate_warn expect_deprecated
 #' @importFrom methods as
-#' @importFrom rlang abort as_function caller_env call2 enexpr enexprs enquo enquos expr
-#' @importFrom rlang expr_text eval_tidy have_name is_formula is_named is_null missing_arg
-#' @importFrom rlang quo quo_is_null quo_squash quo_text seq2 set_names squash sym syms
+#' @importFrom rlang abort arg_match as_function caller_env call2 enexpr enexprs enquo enquos
+#' @importFrom rlang expr expr_text eval_tidy have_name is_bare_vector is_formula is_named
+#' @importFrom rlang parse_expr quo quo_is_null quo_squash quo_text
+#' @importFrom rlang set_names squash sym syms
 #' @importFrom rlang `%|%` `%||%`
-#' @importFrom stats as.formula na.omit setNames
-#' @importFrom utils capture.output head tail
-#' @importFrom vctrs vec_assert vec_as_names vec_as_names_legacy vec_cast vec_ptype_common
-#' @importFrom vctrs vec_recycle vec_size vec_unique
+#' @importFrom stats as.formula na.omit
+#' @importFrom utils capture.output head tail type.convert
+#' @importFrom vctrs vec_assert vec_as_names vec_as_names_legacy vec_cast vec_in
+#' @importFrom vctrs vec_ptype_common vec_recycle vec_size vec_unique
 NULL
 
-globalVariables(c("data", ".","..select_vars", ".count", "na_index", ".new_col",
-                  "..all_names", "..final_order_i", "..rows", "name", "value",
-                  "..all_cols", "..select_cols", "..keep_names", "..unite_cols",
-                  "..keep_cols", ".env"))
+globalVariables(c(".", "name", "value", "..all_cols", "..select_cols",
+                  "..keep_names", "..unite_cols", "..keep_cols", ".env", ".id"))
 
 #' @docType import
 

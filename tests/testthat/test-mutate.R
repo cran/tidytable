@@ -1,3 +1,14 @@
+test_that("dt_ can add multiple columns & is deprecated", {
+  df <- data.table(x = 1:3, y = 1:3)
+  df <- df %>%
+    dt_mutate(double_x = x * 2,
+              double_y = y * 2)
+
+  expect_deprecated(dt_mutate(df, double_x = x * 2))
+  expect_named(df, c("x", "y", "double_x", "double_y"))
+  expect_equal(df$x * 2, df$double_x)
+})
+
 test_that("can remove variables with NULL", {
   df <- data.table(x = 1:3, y = 1:3)
   tidytable_df <- df %>% mutate.(y = NULL)
@@ -28,14 +39,14 @@ test_that("row_number.() works", {
   expect_equal(df$row, df$row_check)
 })
 
-test_that("dt_ can add multiple columns", {
+test_that("row_number.() works v2", {
   df <- data.table(x = 1:3, y = 1:3)
   df <- df %>%
-    dt_mutate(double_x = x * 2,
-              double_y = y * 2)
+    mutate.(double_x = x * 2,
+            row = row_number.(),
+            row_check = 1:.N)
 
-  expect_named(df, c("x", "y", "double_x", "double_y"))
-  expect_equal(df$x * 2, df$double_x)
+  expect_equal(df$row, df$row_check)
 })
 
 test_that("modify-by-reference doesn't occur", {
@@ -87,11 +98,11 @@ test_that("can take data.frame input", {
   expect_equal(df$x * 2, df$double_x)
 })
 
-test_that("can use by", {
+test_that("can use .by", {
   df <- tidytable(x = 1:5, y = c(rep("a", 4), "b"))
 
   tidytable_df <- df %>%
-    mutate.(z = mean(x), by = y)
+    mutate.(z = mean(x), .by = y)
 
   datatable_df <- shallow(df)[, ':='(z = mean(x)), by = y]
 
@@ -99,11 +110,20 @@ test_that("can use by", {
 
 })
 
-test_that("can use by with enhanced selection", {
+test_that("modify-by-reference doesn't occur with single val with .by", {
+  df <- data.table(x = 1:3, y = 1:3)
+  df %>%
+    mutate.(x = 1, .by = y)
+
+  expect_named(df, c("x", "y"))
+  expect_equal(df$x, c(1,2,3))
+})
+
+test_that("can use .by with enhanced selection", {
   df <- tidytable(x = 1:5, y = c(rep("a", 4), "b"))
 
   tidytable_df <- df %>%
-    mutate.(z = mean(x), by = where(is.character))
+    mutate.(z = mean(x), .by = where(is.character))
 
   datatable_df <- shallow(df)[, ':='(z = mean(x)), by = y]
 
@@ -111,11 +131,11 @@ test_that("can use by with enhanced selection", {
 
 })
 
-test_that("can use by with vector", {
+test_that("can use .by with vector", {
   df <- tidytable(x = 1:5, y = c(rep("a", 4), "b"))
 
   tidytable_df <- df %>%
-    mutate.(z = mean(x), by = c(where(is.character)))
+    mutate.(z = mean(x), .by = c(where(is.character)))
 
   datatable_df <- shallow(df)[, ':='(z = mean(x)), by = y]
 
@@ -132,10 +152,10 @@ test_that("can use .N", {
   expect_equal(df$z, c(3,3,3))
 })
 
-test_that("can use .N with by", {
+test_that("can use .N with .by", {
   df <- data.table(x = 1:3, y = c("a","a","b"))
   df <- df %>%
-    mutate.(z = .N, by = y)
+    mutate.(z = .N, .by = y)
 
   expect_named(df, c("x","y","z"))
   expect_equal(df$z, c(2,2,1))
@@ -162,7 +182,7 @@ test_that("can use n.()", {
 test_that("can use n.() with by", {
   df <- data.table(x = 1:3, y = c("a","a","b"))
   df <- df %>%
-    mutate.(z = n.(), by = y)
+    mutate.(z = n.(), .by = y)
 
   expect_named(df, c("x","y","z"))
   expect_equal(df$z, c(2,2,1))
@@ -171,44 +191,45 @@ test_that("can use n.() with by", {
 test_that("can use .GRP", {
   df <- data.table(x = 1:3, y = c("a","a","b"))
   df <- df %>%
-    mutate.(z = .GRP, by = y)
+    mutate.(z = .GRP, .by = y)
 
   expect_named(df, c("x","y","z"))
   expect_equal(df$z, c(1,1,2))
 })
 
-test_that("can use .y in map2.() in nested data.tables", {
-  test_df <- data.table(
-    id = seq(1, 3),
-    val_1 = seq(1, 3, 1),
-    val_2 = seq(4, 6, 1)
-  )
-
-  result_df1 <- test_df %>%
-    nest_by.(id) %>%
-    mutate.(example_1 = map2.(data, id,
-                              ~ mutate.(.x, id = .y))) %>%
-    unnest.(example_1)
-
-  expect_named(result_df1, c("id","val_1", "val_2", "id1"))
-  expect_equal(result_df1$id1, c(1,2,3))
-
-  result_df2 <- test_df %>%
-    nest_by.(id) %>%
-    mutate.(example_1 = map2.(data, id,
-                              ~ .x %>% mutate.(id = .y))) %>%
-    unnest.(example_1)
-
-  expect_named(result_df2, c("id","val_1", "val_2", "id1"))
-  expect_equal(result_df2$id1, c(1,2,3))
-})
+# test_that("can use .y in map2.() in nested data.tables", {
+#   test_df <- data.table(
+#     id = seq(1, 3),
+#     val_1 = seq(1, 3, 1),
+#     val_2 = seq(4, 6, 1)
+#   )
+#
+#   result_df1 <- test_df %>%
+#     nest_by.(id) %>%
+#     mutate.(example_1 = map2.(data, id,
+#                               ~ mutate.(.x, id = .y))) %>%
+#     unnest.(example_1)
+#
+#   expect_named(result_df1, c("id","val_1", "val_2", "id1"))
+#   expect_equal(result_df1$id1, c(1,2,3))
+#
+#   result_df2 <- test_df %>%
+#     nest_by.(id) %>%
+#     mutate.(example_1 = map2.(data, id,
+#                               ~ .x %>% mutate.(id = .y))) %>%
+#     unnest.(example_1)
+#
+#   expect_named(result_df2, c("id","val_1", "val_2", "id1"))
+#   expect_equal(result_df2$id1, c(1,2,3))
+# })
 
 test_that("can make custom functions with quosures", {
   df <- data.table(x = c(1,2,3), y = c(1,1,1), z = c("a","a","b"))
 
   add_one <- function(.data, add_col, new_name, val, by) {
+    val <- val
     .data %>%
-      mutate.({{ new_name }} := {{ add_col }} + val, by = {{ by }})
+      mutate.({{ new_name }} := {{ add_col }} + {{ val }}, .by = {{ by }})
   }
 
   result_df <- df %>%

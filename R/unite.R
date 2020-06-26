@@ -42,6 +42,10 @@ unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRU
 
   .df <- as_tidytable(.df)
 
+  vec_assert(sep, character(), 1)
+  vec_assert(remove, logical(), 1)
+  vec_assert(na.rm, logical(), 1)
+
   dots <- enquos(...)
 
   if (length(dots) == 0) {
@@ -50,8 +54,6 @@ unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRU
     unite_cols <- select_dots_chr(.df, ...)
   }
 
-  col <- enquo(col)
-
   if (na.rm) {
     unite_syms <- syms(unite_cols)
 
@@ -59,10 +61,10 @@ unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRU
     start_na <- paste0("^NA", sep)
     end_na <- paste0(sep, "NA$")
 
-    .df <- mutate.(.df, !!col := paste(!!!unite_syms, sep = sep) %>%
-                       str_replace_all(middle_na, sep) %>%
-                       str_replace_all(start_na, "") %>%
-                       str_replace_all(end_na, ""))
+    .df <- mutate.(.df, !!col := paste(!!!unite_syms, sep = !!sep) %>%
+                       str_replace_all(!!middle_na, !!sep) %>%
+                       str_replace_all(!!start_na, "") %>%
+                       str_replace_all(!!end_na, ""))
   } else {
     .df <- shallow(.df)
 
@@ -78,4 +80,8 @@ unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRU
 
 #' @export
 #' @rdname unite.
-dt_unite <- unite.
+dt_unite <- function(.df, col = "new_col", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
+  deprecate_soft("0.5.2", "tidytable::dt_unite()", "unite.()")
+
+  unite.(.df, col = col, ..., sep = sep, remove = remove, na.rm = na.rm)
+}

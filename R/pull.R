@@ -28,11 +28,15 @@ pull..data.frame <- function(.df, var = NULL) {
   if (quo_is_null(var)) var <- sym(names(.df)[ncol(.df)])
 
   # Base R translation is faster than data.table
-  eval_tidy(quo_squash(quo(
+  eval_quo(
     '$'(.df, !!var)
-  )))
+  )
 }
 
 #' @export
 #' @rdname pull.
-dt_pull <- pull.
+dt_pull <- function(.df, var = NULL) {
+  deprecate_soft("0.5.2", "tidytable::dt_pull()", "pull.()")
+
+  pull.(.df, var = {{ var }})
+}

@@ -7,7 +7,7 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.5.1-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.5.2-green.svg)](https://github.com/markfairbanks/tidytable)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![CRAN RStudio mirror
@@ -84,9 +84,6 @@ devtools::install_github("markfairbanks/tidytable")
   - `rename.()` & `rename_with.()`
   - `row_number.()`
   - `slice.()`: `_head.()`/`_tail.()`/`_max.()`/`_min.()`
-      - The `slice_*()` helpers are like `top_n.()`, but are a bit
-        easier to use
-  - `top_n.()`
   - `transmute.()`
 
 ### tidyr
@@ -99,6 +96,7 @@ devtools::install_github("markfairbanks/tidytable")
   - `pivot_longer.()` & `pivot_wider.()`
   - `replace_na.()`
   - `separate.()`
+  - `separate_rows.()`
   - `unite.()`
 
 ### purrr
@@ -132,14 +130,14 @@ test_df %>%
 Group by calls are done from inside any function that has group by
 functionality (such as `summarize.()` & `mutate.()`)
 
-  - A single column can be passed with `by = z`
-  - Multiple columns can be passed with `by = c(y, z)`
+  - A single column can be passed with `.by = z`
+  - Multiple columns can be passed with `.by = c(y, z)`
   - [`tidyselect`](https://tidyselect.r-lib.org/reference/language.html)
     can also be used, including using predicates:
-      - Single predicate: `by = where(is.character)`
-      - Multiple predicates: `by = c(where(is.character),
+      - Single predicate: `.by = where(is.character)`
+      - Multiple predicates: `.by = c(where(is.character),
         where(is.factor))`
-      - A combination of predicates and column names: `by =
+      - A combination of predicates and column names: `.by =
         c(where(is.character), y)`
 
 <!-- end list -->
@@ -148,12 +146,15 @@ functionality (such as `summarize.()` & `mutate.()`)
 test_df %>%
   summarize.(avg_x = mean(x),
              count = n.(),
-             by = z)
+             .by = z)
 #>        z avg_x count
 #>    <chr> <dbl> <int>
 #> 1:     a   1.5     2
 #> 2:     b   3.0     1
 ```
+
+*Note: The `.by` argument was called `by` in versions of `tidytable`
+prior to `v0.5.2`.*
 
 ## `tidyselect` support
 
@@ -287,7 +288,7 @@ df <- data.table(x = 1:10, y = c(rep("a", 6), rep("b", 4)), z = c(rep("a", 6), r
 find_mean <- function(data, grouping_cols, col) {
   data %>%
     summarize.(avg = mean({{col}}),
-               by = {{grouping_cols}})
+               .by = {{grouping_cols}})
 }
 
 df %>%
@@ -368,17 +369,17 @@ all_marks
 #> # A tibble: 13 x 6
 #>    function_tested data.table tidytable tidyverse pandas tidytable_vs_tidyverse
 #>    <chr>           <chr>      <chr>     <chr>     <chr>  <chr>                 
-#>  1 arrange         58.81ms    58.07ms   422.61ms  355ms  13.7%                 
-#>  2 case_when       69.45ms    69.37ms   448.81ms  59.2ms 15.5%                 
-#>  3 distinct        45.59ms    39.74ms   99.58ms   309ms  39.9%                 
-#>  4 fill            49.86ms    50.49ms   126.32ms  846ms  40.0%                 
-#>  5 filter          244.35ms   232.87ms  308.63ms  707ms  75.5%                 
-#>  6 inner_join      99.18ms    97.69ms   82.47ms   <NA>   118.5%                
-#>  7 left_join       64.18ms    70.53ms   83.69ms   <NA>   84.3%                 
-#>  8 mutate          65.67ms    81ms      64.7ms    86.4ms 125.2%                
-#>  9 nest            16.45ms    17.14ms   33.35ms   <NA>   51.4%                 
-#> 10 pivot_longer    13.06ms    14.43ms   50.31ms   <NA>   28.7%                 
-#> 11 pivot_wider     113.57ms   137.96ms  72.29ms   <NA>   190.8%                
-#> 12 summarize       287.99ms   265.42ms  599.98ms  834ms  44.2%                 
-#> 13 unnest          26.98ms    21.97ms   938.07ms  <NA>   2.3%
+#>  1 arrange         59.42ms    51.54ms   2502.24ms 355ms  2.1%                  
+#>  2 case_when       52.28ms    54.23ms   341.08ms  59.2ms 15.9%                 
+#>  3 distinct        35.93ms    35.39ms   50.27ms   309ms  70.4%                 
+#>  4 fill            39.07ms    51.17ms   56.48ms   846ms  90.6%                 
+#>  5 filter          221.87ms   233.45ms  261.65ms  707ms  89.2%                 
+#>  6 inner_join      68.89ms    57.2ms    91.17ms   <NA>   62.7%                 
+#>  7 left_join       60.78ms    140.38ms  146.27ms  <NA>   96.0%                 
+#>  8 mutate          51.1ms     50.41ms   185.6ms   86.4ms 27.2%                 
+#>  9 nest            12.76ms    19.08ms   32.68ms   <NA>   58.4%                 
+#> 10 pivot_longer    19.04ms    12.04ms   54.11ms   <NA>   22.3%                 
+#> 11 pivot_wider     116.13ms   129.11ms  83.56ms   <NA>   154.5%                
+#> 12 summarize       314.8ms    169.73ms  217.25ms  834ms  78.1%                 
+#> 13 unnest          24.4ms     18.5ms    35.13ms   <NA>   52.7%
 ```

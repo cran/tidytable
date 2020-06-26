@@ -107,7 +107,23 @@ test_that("unnesting works with nested data.frames", {
   expect_equal(unnest_df$a, start_df$a)
 })
 
+test_that("unnesting works with nested matrices", {
+  start_df <- data.table::data.table(
+    a = 1:5,
+    b = 11:15,
+    c = c(rep("a", 3), rep("b", 2)),
+    d = c(rep("a", 2), rep("b", 3)))
 
+  nest_df <- start_df %>%
+    nest_by.(c, d) %>%
+    mutate.(data = map.(data, as.matrix))
+
+  unnest_df <- nest_df %>%
+    unnest.(data)
+
+  expect_named(unnest_df, c("c","d","a","b"))
+  expect_equal(unnest_df$a, start_df$a)
+})
 
 test_that("unnesting works with different ordered/different # of columns", {
   df1 <- data.table(a = "a", b = 1)
@@ -142,4 +158,19 @@ test_that("unnesting works with nested data.table with quosure function", {
 
   expect_named(unnest_df, c("c","d","a","b"))
   expect_equal(unnest_df$a, start_df$a)
+})
+
+test_that("unnesting works with nested data.table with quosure function", {
+  data_size <- 3
+  list_df <- data.table(test = 1:data_size)
+  test_df <- data.table(x = 1:data_size,
+                        y = replicate(data_size, list_df, simplify = FALSE)) %>%
+    mutate.(z = y)
+
+  result_df <- test_df %>%
+    unnest.(y, .keep_all = TRUE)
+
+  expect_named(result_df, c("x","z","test"))
+  expect_true(is.list(result_df$z))
+  expect_equal(result_df$test, rep(1:3, 3))
 })

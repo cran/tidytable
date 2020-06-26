@@ -5,9 +5,9 @@
 \alias{summarise_across.}
 \title{Summarize multiple columns}
 \usage{
-summarize_across.(.df, .cols = everything(), .fns, ..., by = NULL)
+summarize_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
 
-summarise_across.(.df, .cols = everything(), .fns, ..., by = NULL)
+summarise_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -18,7 +18,9 @@ summarise_across.(.df, .cols = everything(), .fns, ..., by = NULL)
 
 \item{...}{Other arguments for the passed function}
 
-\item{by}{Columns to group by}
+\item{.by}{Columns to group by}
+
+\item{by}{This argument has been renamed to .by and is deprecated}
 }
 \description{
 Summarize multiple columns simultaneously
@@ -36,14 +38,14 @@ test_df \%>\%
 test_df \%>\%
   summarize_across.(c(a, b), ~ mean(.x, na.rm = TRUE))
 
-# Passing a list of functions (with by)
+# Passing a list of functions (with .by)
 test_df \%>\%
-  summarize_across.(c(a, b), list(mean, max), by = z)
+  summarize_across.(c(a, b), list(mean, max), .by = z)
 
-# Passing a named list of functions (with by)
+# Passing a named list of functions (with .by)
 test_df \%>\%
   summarize_across.(c(a, b),
                     list(avg = mean,
                          max_plus_one = ~ max(.x) + 1),
-                    by = z)
+                    .by = z)
 }

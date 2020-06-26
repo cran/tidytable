@@ -5,6 +5,7 @@
 #'
 #' @param .df A nested data.table
 #' @param ... Columns to unnest. If empty, unnests all list columns. `tidyselect` compatible.
+#' @param .keep_all Should list columns that were not unnested be kept
 #'
 #' @export
 #' @md
@@ -23,14 +24,16 @@
 #'
 #' nested_df %>%
 #'   unnest.(data, pulled_vec)
-unnest. <- function(.df, ...) {
+unnest. <- function(.df, ..., .keep_all = FALSE) {
   UseMethod("unnest.")
 }
 
 #' @export
-unnest..data.frame <- function(.df, ...) {
+unnest..data.frame <- function(.df, ..., .keep_all = FALSE) {
 
   .df <- as_tidytable(.df)
+
+  vec_assert(.keep_all, logical(), 1)
 
   dots <- enquos(...)
 
@@ -41,15 +44,20 @@ unnest..data.frame <- function(.df, ...) {
   if (length(dots) == 0) dots <- syms(data_names[list_flag])
   else dots <- select_dots_sym(.df, ...)
 
+  keep_cols <- data_names[!list_flag]
+
+  if (.keep_all) {
+    list_cols <- data_names[list_flag]
+
+    keep_cols <- c(keep_cols, list_cols[list_cols %notin% as.character(dots)])
+  }
+
   unnest_data <- map.(dots, ~ unnest_col(.df, .x))
 
   unnest_nrow <- map_dbl.(unnest_data, nrow)
 
   if (!length(vec_unique(unnest_nrow)) == 1)
     abort("unnested data contains different row counts")
-
-  # Get cols to keep (all non-list cols)
-  keep_cols <- data_names[!list_flag]
 
   # Get number of repeats for keep cols
   rep_vec <- map_dbl.(pull.(.df, !!dots[[1]]), vec_size)
@@ -63,25 +71,28 @@ unnest..data.frame <- function(.df, ...) {
 
 #' @export
 #' @rdname unnest.
-dt_unnest_legacy <- unnest.
+dt_unnest_legacy <- function(.df, ..., .keep_all = FALSE) {
+  deprecate_soft("0.5.2", "tidytable::dt_unnest_legacy()", "unnest.()")
+
+  unnest.(.df, ..., .keep_all = .keep_all)
+}
 
 unnest_col <- function(.df, col = NULL) {
 
-  # Check if nested data is a data.frame, data.table, or vector
+  # Check if nested data is a vector
   nested_data <- pull.(.df, !!col)[[1]]
-  is_datatable <- is.data.table(nested_data)
-  is_dataframe <- is.data.frame(nested_data)
+  is_vec <- any(vec_in(class(nested_data), c("character", "factor", "numeric", "integer")))
 
-  if (is_dataframe) {
+  if (is_vec) {
 
-    if (!is_datatable) .df <- mutate.(.df, !!col := map.(!!col, as_tidytable))
-
-    result_df <- bind_rows.(pull.(.df, !!col))
+    result_df <- summarize.(.df, !!col := unlist(!!col, recursive = FALSE))
 
   } else {
-    # Unnests a vector
-    result_df <- summarize.(.df, !!col := unlist(!!col, recursive = FALSE))
+
+    # bind_rows.() auto-converts lists of data.frames/tibbles/matrices to data.tables
+    result_df <- bind_rows.(pull.(.df, !!col))
   }
+
   result_df
 }
 

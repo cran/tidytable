@@ -29,11 +29,15 @@ arrange..data.frame <- function(.df, ...) {
 
   dots <- enquos(...)
 
-  eval_tidy(quo_squash(quo(
+  eval_quo(
     .df[order(!!!dots)]
-  )), .df)
+  )
 }
 
 #' @export
 #' @rdname arrange.
-dt_arrange <- arrange.
+dt_arrange <- function(.df, ...) {
+  deprecate_soft("0.5.2", "tidytable::dt_arrange()", "arrange.()")
+
+  arrange.(.df, ...)
+}
