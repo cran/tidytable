@@ -7,7 +7,7 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.5.2-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.5.3-green.svg)](https://github.com/markfairbanks/tidytable)
 [![Lifecycle:
 maturing](https://img.shields.io/badge/lifecycle-maturing-blue.svg)](https://www.tidyverse.org/lifecycle/#maturing)
 [![CRAN RStudio mirror
@@ -60,9 +60,6 @@ devtools::install_github("markfairbanks/tidytable")
   - `arrange.()`
   - `filter.()`
   - `mutate.()` & `mutate_across.()`
-      - The `_across.()` helper is new and can replace the
-        `_if.()`/`_at.()`/`_all.()` helpers [See
-        here](https://markfairbanks.github.io/tidytable/#new-variant-dt_mutate_across)
   - `select.()`
   - `summarize.()` & `summarize_across.()`
       - Group by specifications called inside. [See
@@ -89,15 +86,18 @@ devtools::install_github("markfairbanks/tidytable")
 ### tidyr
 
   - `drop_na.()`
-  - `fill.()`: Works on character/factor/logical types
-    (`data.table::nafill()` does not)
+  - `complete.()`
+  - `crossing.()`
+  - `expand.()`
+  - `expand_grid.()`
+  - `fill.()`
   - `group_split.()`
   - Nesting: `nest_by.()` & `unnest.()`
   - `pivot_longer.()` & `pivot_wider.()`
   - `replace_na.()`
   - `separate.()`
   - `separate_rows.()`
-  - `unite.()`
+  - `uncount.()`
 
 ### purrr
 
@@ -145,7 +145,7 @@ functionality (such as `summarize.()` & `mutate.()`)
 ``` r
 test_df %>%
   summarize.(avg_x = mean(x),
-             count = n.(),
+             count = .N,
              .by = z)
 #>        z avg_x count
 #>    <chr> <dbl> <int>
@@ -153,8 +153,10 @@ test_df %>%
 #> 2:     b   3.0     1
 ```
 
-*Note: The `.by` argument was called `by` in versions of `tidytable`
-prior to `v0.5.2`.*
+Note: For those new to `data.table`, the `.N` helper is a way to get the
+number of rows by group, much like `n()` from `dplyr`. `tidytable`
+contains a helper function `n.()`, but using `.N` is recommended due to
+better performance.
 
 ## `tidyselect` support
 
@@ -198,53 +200,7 @@ test_df %>%
 
 These same ideas can be used whenever selecting columns in `tidytable`
 functions - for example when using `count.()`, `drop_na.()`,
-`pivot_longer.()`, `pivot_wider.()`, etc.
-
-#### New helper: `mutate_across.()`
-
-`tidyselect` allows the user to replace `mutate_if.()`, `mutate_at.()`,
-and `mutate_all.()` with one helper - `mutate_across.()`.
-
-Using `_across.()` instead of `_if.()`:
-
-``` r
-test_df <- data.table(a = c(1,1,1),
-                      b = c(1,1,1),
-                      c = c("a","a","b"),
-                      d = c("a","b","c"))
-
-test_df %>%
-  mutate_across.(where(is.numeric), as.character)
-#>        a     b     c     d
-#>    <chr> <chr> <chr> <chr>
-#> 1:     1     1     a     a
-#> 2:     1     1     a     b
-#> 3:     1     1     b     c
-```
-
-Using `_across.()` instead of `_at.()`:
-
-``` r
-test_df %>%
-  mutate_across.(c(a, b), ~ .x + 1)
-#>        a     b     c     d
-#>    <dbl> <dbl> <chr> <chr>
-#> 1:     2     2     a     a
-#> 2:     2     2     a     b
-#> 3:     2     2     b     c
-```
-
-Using `_across.()` instead of `_all.()`:
-
-``` r
-test_df %>%
-  mutate_across.(everything(), as.factor)
-#>        a     b     c     d
-#>    <fct> <fct> <fct> <fct>
-#> 1:     1     1     a     a
-#> 2:     1     1     a     b
-#> 3:     1     1     b     c
-```
+`mutate_across.()`, `pivot_longer.()`, etc.
 
 ## `rlang` compatibility
 
@@ -268,7 +224,7 @@ add_one <- function(data, add_col) {
 # Using the {{ }} shortcut
 add_one <- function(data, add_col) {
   data %>%
-    mutate.(new_col = {{add_col}} + 1)
+    mutate.(new_col = {{ add_col }} + 1)
 }
 
 df %>%
@@ -287,8 +243,8 @@ df <- data.table(x = 1:10, y = c(rep("a", 6), rep("b", 4)), z = c(rep("a", 6), r
 
 find_mean <- function(data, grouping_cols, col) {
   data %>%
-    summarize.(avg = mean({{col}}),
-               .by = {{grouping_cols}})
+    summarize.(avg = mean({{ col }}),
+               .by = {{ grouping_cols }})
 }
 
 df %>%
@@ -337,49 +293,7 @@ df %>%
 #> 2:     b   3.0
 ```
 
-### Speed Comparisons
+## Speed Comparisons
 
-Below are some speed comparisons of various functions. More functions
-will get added to the speed comps over time.
-
-A few notes:
-
-  - Comparing times from separate functions won’t be very useful. For
-    example - the `summarize()` tests were performed on a different
-    dataset from `case_when()`.
-  - `setDTthreads(4)` was used for `data.table` & `tidytable` timings.
-  - Modify-by-reference was used in `data.table` when being compared to
-    `mutate.()` & `dplyr::mutate()`
-  - `fill.()` & `tidyr::fill()` both work with character/factor/logical
-    columns, whereas `data.table::nafill()` does not. Testing only
-    included numeric columns due to this constraint.
-  - Currently `data.table` doesn’t have its own `case_when()`
-    translation, so a multiple nested `fifelse()` was used.
-  - All tests can be found in the source code of the README.
-  - `pandas` comparisons are in the process of being added - more will
-    be added soon.
-  - Lastly I’d like to mention that these tests were not rigorously
-    created to cover all angles equally. They are just meant to be used
-    as general insight into the performance of these packages.
-
-<!-- end list -->
-
-``` r
-all_marks
-#> # A tibble: 13 x 6
-#>    function_tested data.table tidytable tidyverse pandas tidytable_vs_tidyverse
-#>    <chr>           <chr>      <chr>     <chr>     <chr>  <chr>                 
-#>  1 arrange         59.42ms    51.54ms   2502.24ms 355ms  2.1%                  
-#>  2 case_when       52.28ms    54.23ms   341.08ms  59.2ms 15.9%                 
-#>  3 distinct        35.93ms    35.39ms   50.27ms   309ms  70.4%                 
-#>  4 fill            39.07ms    51.17ms   56.48ms   846ms  90.6%                 
-#>  5 filter          221.87ms   233.45ms  261.65ms  707ms  89.2%                 
-#>  6 inner_join      68.89ms    57.2ms    91.17ms   <NA>   62.7%                 
-#>  7 left_join       60.78ms    140.38ms  146.27ms  <NA>   96.0%                 
-#>  8 mutate          51.1ms     50.41ms   185.6ms   86.4ms 27.2%                 
-#>  9 nest            12.76ms    19.08ms   32.68ms   <NA>   58.4%                 
-#> 10 pivot_longer    19.04ms    12.04ms   54.11ms   <NA>   22.3%                 
-#> 11 pivot_wider     116.13ms   129.11ms  83.56ms   <NA>   154.5%                
-#> 12 summarize       314.8ms    169.73ms  217.25ms  834ms  78.1%                 
-#> 13 unnest          24.4ms     18.5ms    35.13ms   <NA>   52.7%
-```
+For those interested in performance, speed comparisons can be found
+[here](https://markfairbanks.github.io/tidytable/articles/speed_comparisons.html).
