@@ -2,17 +2,14 @@
 % Please edit documentation in R/n.R
 \name{n.}
 \alias{n.}
-\alias{dt_n}
 \title{Number of observations in each group}
 \usage{
 n.()
-
-dt_n()
 }
 \description{
 Helper function that can be used to find counts by group.
 
-Can be used inside `summarize.()`, `mutate.()`, & `filter.()`
+Can be used inside \code{summarize.()}, \code{mutate.()}, & \code{filter.()}
 }
 \examples{
 test_df <- data.table(

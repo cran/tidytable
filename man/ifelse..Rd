@@ -2,12 +2,9 @@
 % Please edit documentation in R/ifelse.R
 \name{ifelse.}
 \alias{ifelse.}
-\alias{dt_ifelse}
-\title{Vectorized if}
+\title{Fast ifelse}
 \usage{
 ifelse.(conditions, true, false, na = NA)
-
-dt_ifelse(conditions, true, false, na = NA)
 }
 \arguments{
 \item{conditions}{Conditions to test on}
@@ -20,7 +17,7 @@ dt_ifelse(conditions, true, false, na = NA)
 }
 \description{
 \code{ifelse.()} utilizes \code{data.table::fifelse()} in the background, but automatically
-converts NAs to their proper type
+converts NAs to their proper type.
 }
 \examples{
 x <- 1:5
@@ -30,5 +27,5 @@ ifelse.(x > 2, 2, 0)
 test_df <- data.table(x = x)
 
 test_df \%>\%
-  mutate.(new_col = ifelse.(x > 2, 2, 1))
+  mutate.(new_col = ifelse.(x > 2, 2, 0))
 }

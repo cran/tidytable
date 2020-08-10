@@ -3,17 +3,11 @@
 \name{summarize.}
 \alias{summarize.}
 \alias{summarise.}
-\alias{dt_summarise}
-\alias{dt_summarize}
 \title{Aggregate data using summary statistics}
 \usage{
-summarize.(.df, ..., .by = NULL, by = NULL)
+summarize.(.df, ..., .by = NULL, .sort = FALSE, by = NULL)
 
-summarise.(.df, ..., .by = NULL, by = NULL)
-
-dt_summarise(.df, ..., .by = NULL, by = NULL)
-
-dt_summarize(.df, ..., .by = NULL, by = NULL)
+summarise.(.df, ..., .by = NULL, .sort = FALSE, by = NULL)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -22,15 +16,17 @@ dt_summarize(.df, ..., .by = NULL, by = NULL)
 
 \item{.by}{Columns to group by.
 \itemize{
-\item A single column can be passed with \code{by = d}.
-\item Multiple columns can be passed with \code{by = c(c, d)}
+\item A single column can be passed with \code{.by = d}.
+\item Multiple columns can be passed with \code{.by = c(c, d)}
 \item \code{tidyselect} can be used:
 \itemize{
-\item Single predicate: \code{by = where(is.character)}
-\item Multiple predicates: \code{by = c(where(is.character), where(is.factor))}
-\item A combination of predicates and column names: \code{by = c(where(is.character), b)}
+\item Single predicate: \code{.by = where(is.character)}
+\item Multiple predicates: \code{.by = c(where(is.character), where(is.factor))}
+\item A combination of predicates and column names: \code{.by = c(where(is.character), b)}
 }
 }}
+
+\item{.sort}{\emph{experimental}: Should the resulting data.table be sorted by the grouping columns?}
 
 \item{by}{This argument has been renamed to .by and is deprecated}
 }

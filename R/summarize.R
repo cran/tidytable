@@ -6,12 +6,13 @@
 #' @param .df A data.frame or data.table
 #' @param ... Aggregations to perform
 #' @param .by Columns to group by.
-#' * A single column can be passed with `by = d`.
-#' * Multiple columns can be passed with `by = c(c, d)`
+#' * A single column can be passed with `.by = d`.
+#' * Multiple columns can be passed with `.by = c(c, d)`
 #' * `tidyselect` can be used:
-#'   + Single predicate: `by = where(is.character)`
-#'   + Multiple predicates: `by = c(where(is.character), where(is.factor))`
-#'   + A combination of predicates and column names: `by = c(where(is.character), b)`
+#'   + Single predicate: `.by = where(is.character)`
+#'   + Multiple predicates: `.by = c(where(is.character), where(is.factor))`
+#'   + A combination of predicates and column names: `.by = c(where(is.character), b)`
+#' @param .sort _experimental_: Should the resulting data.table be sorted by the grouping columns?
 #' @param by This argument has been renamed to .by and is deprecated
 #'
 #' @export
@@ -31,12 +32,12 @@
 #' test_df %>%
 #'   summarize.(avg_a = mean(a),
 #'              .by = c(c, d))
-summarize. <- function(.df, ..., .by = NULL, by = NULL) {
+summarize. <- function(.df, ..., .by = NULL, .sort = FALSE, by = NULL) {
   UseMethod("summarize.")
 }
 
 #' @export
-summarize..data.frame <- function(.df, ..., .by = NULL, by = NULL) {
+summarize..data.frame <- function(.df, ..., .by = NULL, .sort = FALSE, by = NULL) {
 
   .df <- as_tidytable(.df)
 
@@ -50,10 +51,25 @@ summarize..data.frame <- function(.df, ..., .by = NULL, by = NULL) {
   .by <- check_dot_by(enquo(.by), enquo(by), "summarize.")
   .by <- select_vec_chr(.df, !!.by)
 
-  eval_quo(
-    .df[, list(!!!dots), by = !!.by],
-    new_data_mask(data_env), env = caller_env()
-  )
+  if (.sort) {
+
+    .df <- eval_quo(
+      .df[, list(!!!dots), keyby = !!.by],
+      new_data_mask(data_env), env = caller_env()
+    )
+
+    setkey(.df, NULL)
+
+  } else {
+
+    .df <- eval_quo(
+      .df[, list(!!!dots), by = !!.by],
+      new_data_mask(data_env), env = caller_env()
+    )
+
+  }
+
+  .df
 
 }
 
@@ -62,17 +78,19 @@ summarize..data.frame <- function(.df, ..., .by = NULL, by = NULL) {
 summarise. <- summarize.
 
 #' @export
-#' @rdname summarize.
+#' @rdname dt_verb
+#' @inheritParams summarize.
 dt_summarise <- function(.df, ..., .by = NULL, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_summarise()", "summarise.()")
 
   .by <- check_dot_by(enquo(.by), enquo(by))
 
-  summarize.(.df, ..., .by = !!.by )
+  summarize.(.df, ..., .by = !!.by)
 }
 
 #' @export
-#' @rdname summarize.
+#' @rdname dt_verb
+#' @inheritParams summarize.
 dt_summarize <- function(.df, ..., .by = NULL, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_summarize()", "summarize.()")
 
@@ -85,9 +103,9 @@ wrap_n_dot <- function(quosure) {
   quo_string <- quo_text(quosure)
 
   if (str_detect.(quo_string, "n.[(]")) {
-    parse_expr(str_c.("(", quo_string, ")"))
+    parse_expr(str_replace.(quo_string, "n.\\()", ".N"))
   } else {
-    quo_squash(quosure)
+    quosure
   }
 
 }

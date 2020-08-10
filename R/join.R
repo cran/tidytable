@@ -155,7 +155,8 @@ get_bys <- function(x, y, by = NULL) {
 }
 
 #' @export
-#' @rdname left_join.
+#' @rdname dt_verb
+#' @inheritParams left_join.
 dt_left_join <- function(x, y, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_left_join()", "left_join.()")
 
@@ -163,7 +164,8 @@ dt_left_join <- function(x, y, by = NULL) {
 }
 
 #' @export
-#' @rdname left_join.
+#' @rdname dt_verb
+#' @inheritParams inner_join.
 dt_inner_join <- function(x, y, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_inner_join()", "inner_join.()")
 
@@ -171,7 +173,8 @@ dt_inner_join <- function(x, y, by = NULL) {
 }
 
 #' @export
-#' @rdname left_join.
+#' @rdname dt_verb
+#' @inheritParams right_join.
 dt_right_join <- function(x, y, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_right_join()", "right_join.()")
 
@@ -179,7 +182,8 @@ dt_right_join <- function(x, y, by = NULL) {
 }
 
 #' @export
-#' @rdname left_join.
+#' @rdname dt_verb
+#' @inheritParams full_join.
 dt_full_join <- function(x, y, by = NULL,suffix =  c(".x", ".y")) {
   deprecate_soft("0.5.2", "tidytable::dt_full_join()", "full_join.()")
 
@@ -187,7 +191,8 @@ dt_full_join <- function(x, y, by = NULL,suffix =  c(".x", ".y")) {
 }
 
 #' @export
-#' @rdname left_join.
+#' @rdname dt_verb
+#' @inheritParams anti_join.
 dt_anti_join <- function(x, y, by = NULL) {
   deprecate_soft("0.5.2", "tidytable::dt_anti_join()", "anti_join.()")
 
@@ -204,9 +209,13 @@ join_mold <- function(x, y, by = NULL, suffix = c(".x", ".y"), all_x, all_y) {
   by_x <- by_x_y[[1]]
   by_y <- by_x_y[[2]]
 
-  as_tidytable(
+  result_df <- as_tidytable(
     merge(x = x, y = y, by.x = by_x, by.y = by_y, suffixes = suffix,
           all.x = all_x, all.y = all_y,
           allow.cartesian = TRUE)
   )
+
+  setkey(result_df, NULL)
+
+  result_df
 }

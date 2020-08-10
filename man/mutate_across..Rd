@@ -2,12 +2,17 @@
 % Please edit documentation in R/mutate_across.R
 \name{mutate_across.}
 \alias{mutate_across.}
-\alias{dt_mutate_across}
 \title{Mutate multiple columns simultaneously}
 \usage{
-mutate_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
-
-dt_mutate_across(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
+mutate_across.(
+  .df,
+  .cols = everything(),
+  .fns,
+  ...,
+  .by = NULL,
+  .names = NULL,
+  by = NULL
+)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -19,6 +24,10 @@ dt_mutate_across(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
 \item{...}{Other arguments for the passed function}
 
 \item{.by}{Columns to group by}
+
+\item{.names}{A glue specification that helps with renaming output columns.
+\code{{.col}} stands for the selected column, and \code{{.fn}} stands for the name of the function being applied.
+The default (\code{NULL}) is equivalent to \code{"{.col}"} for a single function case and "\verb{\{.col\}_\{.fn\}}"}
 
 \item{by}{This argument has been renamed to .by and is deprecated}
 }
@@ -43,4 +52,8 @@ test_df \%>\%
 test_df \%>\%
   mutate_across.(c(x, y), list(new = ~ .x * 2,
                                another = ~ .x + 7))
+test_df \%>\%
+  mutate_across.(c(x, y),
+                 .fns = list(new = ~ .x * 2, another = ~ .x + 7),
+                 .names = "{.col}_test_{.fn}")
 }

@@ -6,11 +6,6 @@
 \alias{right_join.}
 \alias{full_join.}
 \alias{anti_join.}
-\alias{dt_left_join}
-\alias{dt_inner_join}
-\alias{dt_right_join}
-\alias{dt_full_join}
-\alias{dt_anti_join}
 \title{Join two data.tables together}
 \usage{
 left_join.(x, y, by = NULL)
@@ -22,16 +17,6 @@ right_join.(x, y, by = NULL)
 full_join.(x, y, by = NULL, suffix = c(".x", ".y"))
 
 anti_join.(x, y, by = NULL)
-
-dt_left_join(x, y, by = NULL)
-
-dt_inner_join(x, y, by = NULL)
-
-dt_right_join(x, y, by = NULL)
-
-dt_full_join(x, y, by = NULL, suffix = c(".x", ".y"))
-
-dt_anti_join(x, y, by = NULL)
 }
 \arguments{
 \item{x}{A data.frame or data.table}
@@ -40,7 +25,7 @@ dt_anti_join(x, y, by = NULL)
 
 \item{by}{A character vector of variables to join by. If NULL, the default, the join will do a natural join, using all variables with common names across the two tables.}
 
-\item{suffix}{Append created for duplicated column names when using `full_join.()`}
+\item{suffix}{Append created for duplicated column names when using \code{full_join.()}}
 }
 \value{
 A data.table

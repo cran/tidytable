@@ -2,19 +2,9 @@
 % Please edit documentation in R/pivot_longer.R
 \name{pivot_longer.}
 \alias{pivot_longer.}
-\alias{dt_pivot_longer}
 \title{Pivot data from wide to long}
 \usage{
 pivot_longer.(
-  .df,
-  cols = everything(),
-  names_to = "name",
-  values_to = "value",
-  values_drop_na = FALSE,
-  ...
-)
-
-dt_pivot_longer(
   .df,
   cols = everything(),
   names_to = "name",
@@ -34,7 +24,7 @@ dt_pivot_longer(
 
 \item{values_drop_na}{If TRUE, rows will be dropped that contain NAs.}
 
-\item{...}{Additional arguments to pass to \code{melt.df.table()}}
+\item{...}{Additional arguments to pass to \code{melt.data.table()}}
 }
 \description{
 \code{pivot_wider.()} "widens" data, increasing the number of columns and

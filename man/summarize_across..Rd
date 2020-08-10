@@ -5,9 +5,25 @@
 \alias{summarise_across.}
 \title{Summarize multiple columns}
 \usage{
-summarize_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
+summarize_across.(
+  .df,
+  .cols = everything(),
+  .fns,
+  ...,
+  .by = NULL,
+  .names = NULL,
+  by = NULL
+)
 
-summarise_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
+summarise_across.(
+  .df,
+  .cols = everything(),
+  .fns,
+  ...,
+  .by = NULL,
+  .names = NULL,
+  by = NULL
+)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -20,6 +36,11 @@ summarise_across.(.df, .cols = everything(), .fns, ..., .by = NULL, by = NULL)
 
 \item{.by}{Columns to group by}
 
+\item{.names}{A glue specification that helps with renaming output columns.
+\code{{.col}} stands for the selected column, and \code{{.fn}} stands for the name of the function being applied.
+The default (\code{NULL}) is equivalent to \code{"{.col}"} for a single function case and "\verb{\{.col\}_\{.fn\}}"
+when a list is used for \code{.fns}.}
+
 \item{by}{This argument has been renamed to .by and is deprecated}
 }
 \description{
@@ -30,7 +51,7 @@ test_df <- data.table(a = 1:3,
                       b = 4:6,
                       z = c("a", "a", "b"))
 
-# Single function
+# Pass a single function
 test_df \%>\%
   summarize_across.(c(a, b), mean, na.rm = TRUE)
 
@@ -46,6 +67,14 @@ test_df \%>\%
 test_df \%>\%
   summarize_across.(c(a, b),
                     list(avg = mean,
-                         max_plus_one = ~ max(.x) + 1),
+                         max = ~ max(.x)),
                     .by = z)
+
+# Use the `.names` argument for more naming control
+test_df \%>\%
+  summarize_across.(c(a, b),
+                    list(avg = mean,
+                         max = ~ max(.x)),
+                    .by = z,
+                    .names = "{.col}_test_{.fn}")
 }

@@ -6,7 +6,7 @@
 #' Note: This function does not use data.table's modify-by-reference
 #'
 #' @param .df A data.frame or data.table
-#' @param ... Arguments passed to data.table call. See ?data.table:::`[.df.table`
+#' @param ... Arguments passed to data.table call. See ?data.table::`[.data.table`
 #'
 #' @examples
 #' test_df <- tidytable(
@@ -15,7 +15,7 @@
 #'   z = c("a", "a", "b"))
 #'
 #' test_df %>%
-#'   dt(, ':='(double_x = x * 2)) %>%
+#'   dt(, double_x := x * 2) %>%
 #'   dt(order(-double_x))
 #' @export
 dt <- function(.df, ...) {

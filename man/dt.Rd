@@ -9,7 +9,7 @@ dt(.df, ...)
 \arguments{
 \item{.df}{A data.frame or data.table}
 
-\item{...}{Arguments passed to data.table call. See ?data.table:::`[.df.table`}
+\item{...}{Arguments passed to data.table call. See ?data.table::\verb{[.data.table}}
 }
 \description{
 Pipeable data.table call
@@ -23,6 +23,6 @@ test_df <- tidytable(
   z = c("a", "a", "b"))
 
 test_df \%>\%
-  dt(, ':='(double_x = x * 2)) \%>\%
+  dt(, double_x := x * 2) \%>\%
   dt(order(-double_x))
 }

@@ -2,17 +2,14 @@
 % Please edit documentation in R/relocate.R
 \name{relocate.}
 \alias{relocate.}
-\alias{dt_relocate}
 \title{Relocate a column to a new position}
 \usage{
 relocate.(.df, ..., .before = NULL, .after = NULL)
-
-dt_relocate(.df, ..., .before = NULL, .after = NULL)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
 
-\item{...}{A selection of columns to move. `tidyselect` compatible.}
+\item{...}{A selection of columns to move. \code{tidyselect} compatible.}
 
 \item{.before}{Column to move selection before}
 

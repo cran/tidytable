@@ -44,13 +44,11 @@ nest_by..data.frame <- function(.df, ..., .key = "data", .keep = FALSE) {
 
   if (.keep) {
 
-    split_vars <- select_dots_sym(.df, ...)
+    split_list <- group_split.(.df, ..., .keep = .keep)
 
-    split_list <- group_split.(.df, !!!split_vars, .keep = .keep)
+    .df <- distinct.(.df, ...)
 
-    .df <- distinct.(.df, !!!split_vars)
-
-    .df <- mutate.(.df, !!.key := !!split_list)
+    .df <- mutate.(.df, !!.key := split_list)
 
   } else {
 
@@ -64,7 +62,8 @@ nest_by..data.frame <- function(.df, ..., .key = "data", .keep = FALSE) {
 }
 
 #' @export
-#' @rdname nest_by.
+#' @rdname dt_verb
+#' @inheritParams nest_by.
 dt_group_nest <- function(.df, ..., .key = "data", .keep = FALSE) {
   deprecate_soft("0.5.2", "tidytable::dt_group_nest()", "nest_by.()")
 
