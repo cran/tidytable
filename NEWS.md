@@ -1,3 +1,31 @@
+# tidytable 0.5.5
+
+#### Breaking changes
+* `bind_rows.()`: Removed `.use_names` and `.fill` args
+  + These are now assumed to be `TRUE`, which matches `dplyr` semantics.
+* `complete.()`: `.fill` arg renamed to `fill`
+* `pull.()`: defaults to `var = -1` instead of `var = NULL`
+  + The result is the same when using the default value,
+  but will break cases where `var = NULL` was explicitly called.
+* `slice.()`: `.by` must be named when slicing by group
+
+#### Functionality improvements
+* `tidytable` now integrates better with tidyverse functions through `vctrs`. This means code such as
+`vec_cbind(tibble::tibble(x = 1:3), tidytable(y = "foo"))`
+will bind the results into a tidytable.
+* `complete.()`: Can now append extra values
+* `pull.()`: Numerical selection now works
+* `slice.()`: Now uses `...` to select which rows to slice
+
+#### New functions
+* `semi_join.()`
+
+#### Bug fixes
+* `rename.()`: Works when there are spaces in the column names (#109)
+
+#### Functions with notable speed improvements
+* `replace_na.()`
+
 # tidytable 0.5.4
 
 #### Breaking changes

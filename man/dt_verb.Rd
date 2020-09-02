@@ -69,7 +69,7 @@
 \usage{
 dt_arrange(.df, ...)
 
-dt_bind_rows(..., .id = NULL, .use_names = TRUE, .fill = TRUE)
+dt_bind_rows(..., .id = NULL)
 
 dt_bind_cols(...)
 
@@ -172,7 +172,7 @@ dt_pivot_wider(
   values_fn = NULL
 )
 
-dt_pull(.df, var = NULL)
+dt_pull(.df, var = -1)
 
 dt_relocate(.df, ..., .before = NULL, .after = NULL)
 
@@ -188,7 +188,7 @@ dt_select(.df, ...)
 
 dt_separate(.df, col, into, sep = "[^[:alnum:]]+", remove = TRUE, ...)
 
-dt_slice(.df, rows = 1:5, .by = NULL, by = NULL)
+dt_slice(.df, ..., .by = NULL, by = NULL)
 
 dt_slice_head(.df, n = 5, .by = NULL, by = NULL)
 
@@ -214,10 +214,6 @@ dt_unnest_legacy(.df, ..., .keep_all = FALSE)
 \item{...}{Variables to arrange by}
 
 \item{.id}{If TRUE, an integer column is made as a group id}
-
-\item{.use_names}{If TRUE, makes sure column names align}
-
-\item{.fill}{If TRUE, fills missing columns with NA}
 
 \item{default}{Default value. Set to NA by default.}
 
@@ -296,7 +292,12 @@ Typically used when you have additional variables that is directly related.
 
 \item{values_fn}{Should the data be aggregated before casting? If the formula doesn't identify a single observation for each cell, then aggregation defaults to length with a message.}
 
-\item{var}{The column to pull from the data.table. If NULL, pulls the last column.}
+\item{var}{The column to pull from the data.table as:
+\itemize{
+\item a variable name
+\item a positive integer giving the column position
+\item a negative integer giving the column position counting from the right
+}}
 
 \item{.before}{Column to move selection before}
 
@@ -314,8 +315,6 @@ If \code{.x} is a vector, a single replacement value.}
 \item{sep}{Separator to split on. Can be specified or detected automatically}
 
 \item{remove}{If TRUE, remove the input column from the output data.table}
-
-\item{rows}{Integer row values. Provide either positive values to keep, or negative values to drop. The values provided must be either all positive or all negative.}
 
 \item{n}{Number of rows to grab}
 

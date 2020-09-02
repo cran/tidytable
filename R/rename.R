@@ -27,7 +27,7 @@ rename..data.frame <- function(.df, ...) {
   .df <- shallow(.df)
 
   new_names <- names(dots)
-  old_names <- map_chr.(dots, quo_text)
+  old_names <- map_chr.(dots, quo_name)
 
   setnames(.df, old_names, new_names)
 
@@ -38,7 +38,7 @@ rename..data.frame <- function(.df, ...) {
 #' @rdname dt_verb
 #' @inheritParams rename.
 dt_rename <- function(.df, ...) {
-  deprecate_soft("0.5.2", "tidytable::dt_rename()", "rename.()")
+  deprecate_warn("0.5.2", "tidytable::dt_rename()", "rename.()")
 
   rename.(.df, ...)
 }

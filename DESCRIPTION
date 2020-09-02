@@ -1,6 +1,6 @@
 Package: tidytable
 Title: Tidy Interface to 'data.table'
-Version: 0.5.4
+Version: 0.5.5
 Authors@R: 
     c(person(given = "Mark",
              family = "Fairbanks",
@@ -17,12 +17,16 @@ Authors@R:
              role = "ctb"),
       person(given = "Lionel",
              family = "Henry",
-             role = "ctb",
-             email = "lionel@rstudio.com"),
+             role = "ctb"),
       person(given = "Matt",
              family = "Carlson",
-             role = "ctb"))
-Description: A tidy interface to 'data.table' that is 'rlang' compatible, giving users the speed of 'data.table' with the clean syntax of the tidyverse.
+             role = "ctb"),
+      person(given = "Abdessabour",
+             family = "Moutik",
+             role = "ctb")
+             )
+Description: A tidy interface to 'data.table' that is 'rlang' compatible,
+  giving users the speed of 'data.table' with the clean syntax of the tidyverse.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -34,13 +38,14 @@ URL: https://github.com/markfairbanks/tidytable
 BugReports: https://github.com/markfairbanks/tidytable/issues
 Suggests: testthat (>= 2.1.0), bit64, knitr, rmarkdown
 NeedsCompilation: no
-Packaged: 2020-08-08 02:48:15 UTC; xmxf129
+Packaged: 2020-09-01 17:13:39 UTC; xmxf129
 Author: Mark Fairbanks [aut, cre],
   Tyson Barrett [ctb],
   Ivan Leung [ctb],
   Ross Kennedy [ctb],
   Lionel Henry [ctb],
-  Matt Carlson [ctb]
+  Matt Carlson [ctb],
+  Abdessabour Moutik [ctb]
 Maintainer: Mark Fairbanks <mark.t.fairbanks@gmail.com>
 Repository: CRAN
-Date/Publication: 2020-08-10 17:10:05 UTC
+Date/Publication: 2020-09-02 06:50:03 UTC

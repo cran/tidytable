@@ -8,12 +8,9 @@
 #' @param ... Sequence of condition/value designations
 #' @param default Default value. Set to NA by default.
 #'
-#' @md
 #' @export
 #'
 #' @examples
-#' library(data.table)
-#'
 #' test_df <- tidytable(
 #'   a = 1:10,
 #'   b = 11:20,
@@ -58,7 +55,7 @@ case. <- function(..., default = NA) {
 #' @rdname dt_verb
 #' @inheritParams case.
 dt_case <- function(..., default = NA) {
-  deprecate_soft("0.5.2", "tidytable::dt_case()", "case.()")
+  deprecate_warn("0.5.2", "tidytable::dt_case()", "case.()")
 
   case.(..., default = default)
 }
