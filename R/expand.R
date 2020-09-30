@@ -9,7 +9,7 @@
 #'
 #' @param .df A data.frame or data.table
 #' @param ... Columns to get combinations of
-#' @param .name_repair Treatment of problematic names. See `?vctrs::vec_as_names` for options/details
+#' @param .name_repair Treatment of duplicate names. See `?vctrs::vec_as_names` for options/details
 #'
 #' @md
 #' @export
@@ -40,7 +40,7 @@ expand..data.frame <- function(.df, ..., .name_repair = "check_unique") {
   data_env <- env(quo_get_env(dots[[1]]), !!!data_vars)
 
   result_df <- eval_quo(
-    crossing.(!!!dots),
+    tidytable::crossing.(!!!dots),
     new_data_mask(data_env), env = caller_env()
   )
 

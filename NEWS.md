@@ -1,3 +1,30 @@
+# tidytable 0.5.6
+
+#### Breaking changes
+* `bind_cols.()`: Name repair uses `vec_as_names()` instead of `vec_as_names_legacy()`
+
+#### Functionality improvements
+* `bind_cols.()`: Added `.name_repair` arg
+* `unnest.()`: Added `names_sep` and `names_repair` args
+* `print()`
+  + Added `n`, `width`, and `n_extra` args
+  + Now prints like tibbles in all cases (special thanks to @moutikabdessabour)
+* `slice.()`: Can now drop specified rows with negative numbers
+
+#### New functions
+* `arrange_across.()`
+* `case_when.()`
+  + The old "case when" translation `case.()` will remain in the package,
+  as it is called like `data.table::fcase()` but allows for the `default`
+  to be a vector.
+* `desc.()`
+
+#### Functions with notable speed improvements
+* `slice.()`
+  
+#### Deprecations
+* `unnest.()`: `.keep_all` arg changed to `.drop`
+
 # tidytable 0.5.5
 
 #### Breaking changes

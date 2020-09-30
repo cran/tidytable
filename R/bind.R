@@ -5,6 +5,7 @@
 #'
 #' @param ... data.tables or data.frames to bind
 #' @param .id If TRUE, an integer column is made as a group id
+#' @param .name_repair Treatment of duplicate names. See `?vctrs::vec_as_names` for options/details.
 #'
 #' @export
 #' @md
@@ -23,7 +24,7 @@
 #'
 #' bind_cols.(list(df1, df2))
 #' @export
-bind_cols. <- function(...) {
+bind_cols. <- function(..., .name_repair = "unique") {
 
   dots <- list(...)
   dots <- squash(dots)
@@ -33,7 +34,7 @@ bind_cols. <- function(...) {
 
   dots <- setDT(unlist(dots, recursive = FALSE), check.names = FALSE)
 
-  names(dots) <- vec_as_names_legacy(names(dots))
+  names(dots) <- vec_as_names(names(dots), repair = .name_repair)
 
   as_tidytable(dots)
 
@@ -43,7 +44,7 @@ bind_cols. <- function(...) {
 #' @rdname dt_verb
 #' @inheritParams bind_rows.
 dt_bind_rows <- function(..., .id = NULL) {
-  deprecate_warn("0.5.2", "tidytable::dt_bind_rows()", "bind_rows.()")
+  deprecate_stop("0.5.2", "tidytable::dt_bind_rows()", "bind_rows.()")
 
   bind_rows.(..., .id = .id)
 }
@@ -67,7 +68,7 @@ bind_rows. <- function(..., .id = NULL) {
 #' @rdname dt_verb
 #' @inheritParams bind_cols.
 dt_bind_cols <- function(...) {
-  deprecate_warn("0.5.2", "tidytable::dt_bind_cols()", "bind_cols.()")
+  deprecate_stop("0.5.2", "tidytable::dt_bind_cols()", "bind_cols.()")
 
   bind_cols.(...)
 }
