@@ -46,7 +46,7 @@ slice..data.frame <- function(.df, ..., .by = NULL) {
 
   .df <- as_tidytable(.df)
 
-  rows <- enquos(...) # Needed so 1:.N works
+  rows <- enquos(...) # Needed so .N works
 
   if (length(rows) == 0) return(.df)
 
@@ -57,28 +57,35 @@ slice..data.frame <- function(.df, ..., .by = NULL) {
   by_is_null <- quo_is_null(.by)
 
   if (by_is_null) {
-    .df <- eval_quo(
-      .df[{.rows = c(!!!rows); .rows = .rows[data.table::between(.rows, -.N, .N)]; .rows}],
+    eval_quo(
+      .df[{.rows = c(!!!rows); .rows[data.table::between(.rows, -.N, .N)]}],
       new_data_mask(data_env), env = caller_env()
     )
   } else {
-
-    col_order <- names(.df)
+    .df_names <- names(.df)
 
     .by <- select_vec_chr(.df, !!.by)
 
-    .df <- eval_quo(
-      .df[,
-          .SD[{.rows = c(!!!rows); .rows = .rows[data.table::between(.rows, -.N, .N)]; .rows}],
-          by = !!.by],
-      new_data_mask(data_env), env = caller_env()
+    slice_call <- quo(
+      {.rows = c(!!!rows);
+      .rows = .rows[data.table::between(.rows, -.N, .N)];
+      vctrs::vec_slice(.SD, .rows)}
     )
 
-    setcolorder(.df, col_order)
-
+    if (all(.df_names %in% .by)) {
+      eval_quo(
+        .df[, !!slice_call, by = !!.by, .SDcols = !!.df_names][, (!!.df_names) := NULL][],
+        new_data_mask(data_env), env = caller_env()
+      )
+    } else {
+      .df <- eval_quo(
+        .df[, !!slice_call, by = !!.by],
+        new_data_mask(data_env), env = caller_env()
+      )
+      # Need to preserve original column order
+      setcolorder(.df, .df_names)[]
+    }
   }
-
-  .df
 }
 
 #' @export
@@ -98,16 +105,23 @@ slice_head..data.frame <- function(.df, n = 5, .by = NULL) {
 
   .by <- select_vec_chr(.df, {{ .by }})
 
-  if (length(.by) > 0) col_order <- names(.df)
+  with_by <- length(.by) > 0
 
-  .df <- eval_quo(
-    .df[, head(.SD, !!n), by = !!.by],
-    new_data_mask(data_env), env = caller_env()
-  )
+  .df_names <- names(.df)
 
-  if (length(.by) > 0) setcolorder(.df, col_order)
-
-  .df
+  if (all(.df_names %in% .by)) {
+    eval_quo(
+      .df[, head(.SD, !!n), by = !!.by, .SDcols = !!.df_names][, (!!.df_names) := NULL][],
+      new_data_mask(data_env), env = caller_env()
+    )
+  } else {
+    .df <- eval_quo(
+      .df[, head(.SD, !!n), by = !!.by],
+      new_data_mask(data_env), env = caller_env()
+    )
+    if (with_by) setcolorder(.df, .df_names)[]
+    else .df
+  }
 
 }
 
@@ -128,16 +142,23 @@ slice_tail..data.frame <- function(.df, n = 5, .by = NULL) {
 
   .by <- select_vec_chr(.df, {{ .by }})
 
-  if (length(.by) > 0) col_order <- names(.df)
+  with_by <- length(.by) > 0
 
-  .df <- eval_quo(
-    .df[, tail(.SD, !!n), by = !!.by],
-    new_data_mask(data_env), env = caller_env()
-  )
+  .df_names <- names(.df)
 
-  if (length(.by) > 0) setcolorder(.df, col_order)
-
-  .df
+  if (all(.df_names %in% .by)) {
+    eval_quo(
+      .df[, tail(.SD, !!n), by = !!.by, .SDcols = !!.df_names][, (!!.df_names) := NULL][],
+      new_data_mask(data_env), env = caller_env()
+    )
+  } else {
+    .df <- eval_quo(
+      .df[, tail(.SD, !!n), by = !!.by],
+      new_data_mask(data_env), env = caller_env()
+    )
+    if (with_by) setcolorder(.df, .df_names)[]
+    else .df
+  }
 }
 
 #' @export
@@ -175,53 +196,5 @@ slice_min..data.frame <- function(.df, order_by, n = 1, .by = NULL) {
     arrange.({{ order_by }}) %>%
     slice_head.(n, .by = {{ .by }})
 }
-
-#' @export
-#' @rdname dt_verb
-#' @inheritParams slice.
-dt_slice <- function(.df, ..., .by = NULL) {
-  deprecate_stop("0.5.2", "tidytable::dt_slice()", "slice.()")
-
-  slice.(.df, ..., .by = {{ .by }})
-}
-
-#' @export
-#' @rdname dt_verb
-#' @inheritParams slice_head.
-dt_slice_head <- function(.df, n = 5, .by = NULL) {
-  deprecate_stop("0.5.2", "tidytable::dt_slice_head()", "slice_head.()")
-
-  slice_head.(.df, n, .by = {{ .by }})
-}
-
-#' @export
-#' @rdname dt_verb
-#' @inheritParams slice_tail.
-dt_slice_tail <- function(.df, n = 5, .by = NULL) {
-  deprecate_stop("0.5.2", "tidytable::dt_slice_tail()", "slice_tail.()")
-
-  slice_tail.(.df, n, .by = {{ .by }})
-}
-
-#' @export
-#' @rdname dt_verb
-#' @inheritParams slice_min.
-dt_slice_min <- function(.df, order_by, n = 1, .by = NULL) {
-  deprecate_stop("0.5.2", "tidytable::dt_slice_min()", "slice_min.()")
-
-  slice_min.(.df, order_by = {{ order_by }}, n = n, .by = {{ .by }})
-}
-
-
-#' @export
-#' @rdname dt_verb
-#' @inheritParams slice_max.
-dt_slice_max <- function(.df, order_by, n = 1, .by = NULL) {
-  deprecate_stop("0.5.2", "tidytable::dt_slice_max()", "slice_max.()")
-
-  slice_max.(.df, order_by = {{ order_by }}, n = n, .by = {{ .by }})
-}
-
-
 
 
