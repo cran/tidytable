@@ -7,21 +7,17 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.5.7-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.5.8-green.svg)](https://github.com/markfairbanks/tidytable)
 [![CRAN RStudio mirror
 downloads](https://cranlogs.r-pkg.org/badges/last-month/tidytable?color=blue)](https://markfairbanks.github.io/tidytable/)
 <!-- badges: end -->
 
 #### Why `tidytable`?
 
-  - `tidyverse`-like syntax with `data.table` speed
-  - `rlang` compatibility
-  - Includes functions that `dtplyr` is missing, including many `tidyr`
+-   `tidyverse`-like syntax with `data.table` speed
+-   `rlang` compatibility
+-   Includes functions that `dtplyr` is missing, including many `tidyr`
     functions
-
-Note: `tidytable` functions do not use `data.table`’s
-modify-by-reference, and instead use the copy-on-modify principles
-followed by the `tidyverse` and base R.
 
 ## Installation
 
@@ -47,7 +43,7 @@ devtools::install_github("markfairbanks/tidytable")
 ``` r
 library(tidytable)
 
-test_df <- data.table(x = c(1,2,3), y = c(4,5,6), z = c("a","a","b"))
+test_df <- data.table(x = 1:3, y = 4:6, z = c("a","a","b"))
 
 test_df %>%
   select.(x, y, z) %>%
@@ -57,7 +53,7 @@ test_df %>%
           double_y = y * 2)
 #> # tidytable [3 × 5]
 #>       x     y z     double_x double_y
-#>   <dbl> <dbl> <chr>    <dbl>    <dbl>
+#>   <int> <int> <chr>    <dbl>    <dbl>
 #> 1     1     4 a            2        8
 #> 2     2     5 a            4       10
 #> 3     3     6 b            6       12
@@ -71,10 +67,8 @@ A full list of functions can be found
 Group by calls are done from inside any function that has group by
 functionality (such as `summarize.()` & `mutate.()`)
 
-  - A single column can be passed with `.by = z`
-  - Multiple columns can be passed with `.by = c(y, z)`
-
-<!-- end list -->
+-   A single column can be passed with `.by = z`
+-   Multiple columns can be passed with `.by = c(y, z)`
 
 ``` r
 test_df %>%
@@ -152,9 +146,9 @@ etc.
 
 ``` r
 test_df <- data.table(
-  a = c(1,2,3),
-  b1 = c(4,5,6),
-  b2 = c(7,8,9),
+  a = 1:3,
+  b1 = 4:6,
+  b2 = 7:9,
   c = c("a","a","b")
 )
 
@@ -162,7 +156,7 @@ test_df %>%
   select.(a, starts_with("b"))
 #> # tidytable [3 × 3]
 #>       a    b1    b2
-#>   <dbl> <dbl> <dbl>
+#>   <int> <int> <int>
 #> 1     1     4     7
 #> 2     2     5     8
 #> 3     3     6     9
@@ -194,8 +188,8 @@ A full overview of selection options can be found
 
 ``` r
 test_df <- data.table(
-  a = c(1,2,3),
-  b = c(4,5,6),
+  a = 1:3,
+  b = 4:6,
   c = c("a","a","b"),
   d = c("a","a","b")
 )
@@ -242,7 +236,7 @@ All `tidytable` functions automatically convert `data.frame` and
 library(dplyr)
 library(data.table)
 
-test_df <- tibble(x = c(1,2,3), y = c(4,5,6), z = c("a","a","b"))
+test_df <- tibble(x = 1:3, y = 4:6, z = c("a","a","b"))
 
 test_df %>%
   mutate.(double_x = x * 2) %>%
@@ -256,7 +250,7 @@ The `dt()` function makes regular `data.table` syntax pipeable, so you
 can easily mix `tidytable` syntax with `data.table` syntax:
 
 ``` r
-df <- data.table(x = c(1,2,3), y = c(4,5,6), z = c("a", "a", "b"))
+df <- data.table(x = 1:3, y = 4:6, z = c("a", "a", "b"))
 
 df %>%
   dt(, list(x, y, z)) %>%

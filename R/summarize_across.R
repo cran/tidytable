@@ -59,52 +59,21 @@ summarize_across..data.frame <- function(.df, .cols = everything(), .fns, ...,
 
   .cols <- select_vec_chr(.df, {{ .cols }})
 
-  .by <- select_vec_chr(.df, {{ .by }})
+  data_env <- env(quo_get_env(enquo(.fns)), .df = .df)
 
-  .cols <- .cols[.cols %notin% .by]
+  dots <- enquos(...)
 
-  if (length(.cols) == 0) abort("No columns have been selected to summarize.()")
+  if (length(.cols) == 0) return(.df)
 
-  if (!is.list(.fns)) {
+  .fun <- enexpr(.fns)
 
-    .names <- .names %||% "{.col}"
+  call_list <- across_calls(.fns, .fun, .cols, .names, dots)
 
-    .col_names <- vec_as_names(
-      glue(.names, .col = .cols, .fn = "1", col = .cols, fn = "1"),
-      repair = "check_unique", quiet = TRUE
-    )
+  result_expr <- reset_expr(
+    tidytable::summarize.(.df, !!!call_list, .by = {{ .by }})
+  )
 
-    .fns <- as_function(.fns)
-
-    .df <- eval_quo(
-      .df[, lapply(.SD, .fns, ...), .SDcols = .cols, by = .by]
-    )
-
-    names(.df) <- c(.by, .col_names)
-
-  } else {
-
-    # Make new names
-    names_flag <- have_name(.fns)
-
-    if (!all(names_flag)) names(.fns)[!names_flag] <- seq_len(length(.fns))[!names_flag]
-
-    fn_names <- names(.fns)
-
-    .names <- .names %||% "{.col}_{.fn}"
-
-    new_names <- unlist(map.(fn_names, ~ glue(.names, .col = .cols, .fn = .x, col = .cols, fn = .x)))
-
-    # Convert .fns to list of map./lapply calls
-    .fns <- map.(.fns, ~ call2('map.', quo(.SD), .x))
-
-    .df <- eval_quo(
-      .df[, c(!!!.fns), .SDcols = .cols, by = .by]
-    )
-
-    names(.df) <- c(.by, new_names)
-  }
-  .df
+  eval_tidy(result_expr, new_data_mask(data_env), caller_env())
 }
 
 #' @export

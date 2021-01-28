@@ -1,8 +1,8 @@
 # Shortcut to use rlang quoting/unquoting with data.table/base R expressions
 # Currently used in `R/n.R` and `R/row_number.R`
 # Can be replaced by rlang::inject() if rlang dependency is bumped to v0.4.9
-eval_expr <- function(express) {
-  eval_tidy(enexpr(express), env = caller_env())
+eval_expr <- function(express, env = caller_env()) {
+  eval_tidy(enexpr(express), env = env)
 }
 
 # Allows use of quosures inside data.tables
@@ -53,6 +53,10 @@ pmap. <- function(.l, .f, ...) {
     args, MoreArgs = quote(list(...)),
     SIMPLIFY = FALSE, USE.NAMES = FALSE
   ))
+}
+
+pmap_chr. <- function(.l, .f, ...) {
+  as.character(pmap.(.l, .f, ...))
 }
 
 args_recycle <- function(args) {
