@@ -9,6 +9,7 @@ pivot_longer.(
   cols = everything(),
   names_to = "name",
   values_to = "value",
+  names_prefix = NULL,
   names_sep = NULL,
   names_pattern = NULL,
   names_ptypes = list(),
@@ -22,13 +23,15 @@ pivot_longer.(
 )
 }
 \arguments{
-\item{.df}{The data table to pivot longer}
+\item{.df}{A data.table or data.frame}
 
-\item{cols}{Vector of bare column names. Can add/drop columns. \code{tidyselect} compatible.}
+\item{cols}{Columns to pivot. \code{tidyselect} compatible.}
 
 \item{names_to}{Name of the new "names" column. Must be a string.}
 
 \item{values_to}{Name of the new "values" column. Must be a string.}
+
+\item{names_prefix}{Remove matching text from the start of selected columns using regex.}
 
 \item{names_sep}{If \code{names_to} contains multiple values, \code{names_sep} takes
 the same specification as \code{separate.()}.}
@@ -63,7 +66,7 @@ test_df <- data.table(
 )
 
 test_df \%>\%
-  pivot_longer.(c(x, y))
+  pivot_longer.(cols = c(x, y))
 
 test_df \%>\%
   pivot_longer.(cols = -z, names_to = "stuff", values_to = "things")

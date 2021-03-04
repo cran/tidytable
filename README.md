@@ -7,7 +7,7 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/tidytable)](https://cran.r-project.org/package=tidytable)
-[![](https://img.shields.io/badge/dev%20-0.5.8-green.svg)](https://github.com/markfairbanks/tidytable)
+[![](https://img.shields.io/badge/dev%20-0.5.8.9-green.svg)](https://github.com/markfairbanks/tidytable)
 [![CRAN RStudio mirror
 downloads](https://cranlogs.r-pkg.org/badges/last-month/tidytable?color=blue)](https://markfairbanks.github.io/tidytable/)
 <!-- badges: end -->
@@ -64,8 +64,8 @@ A full list of functions can be found
 
 ## Using “group by”
 
-Group by calls are done from inside any function that has group by
-functionality (such as `summarize.()` & `mutate.()`)
+Group by calls are done by using the `.by` argument of any function that
+has “by group” functionality.
 
 -   A single column can be passed with `.by = z`
 -   Multiple columns can be passed with `.by = c(y, z)`
@@ -73,25 +73,46 @@ functionality (such as `summarize.()` & `mutate.()`)
 ``` r
 test_df %>%
   summarize.(avg_x = mean(x),
-             count = n.(),
+             max_y = max(y),
              .by = z)
 #> # tidytable [2 × 3]
-#>   z     avg_x count
+#>   z     avg_x max_y
 #>   <chr> <dbl> <int>
-#> 1 a       1.5     2
-#> 2 b       3       1
+#> 1 a       1.5     5
+#> 2 b       3       6
 ```
 
 ### `.by` vs. `group_by()`
 
-A key difference between `tidytable`/`data.table` & `dplyr` is that
-`dplyr` can have multiple functions operate “by group” with a single
-`group_by()` call.
+`tidytable` follows `data.table` semantics where `.by` must be called
+each time you want a function to operate “by group”.
 
-We’ll start with an example `dplyr` pipe chain that utilizes
-`group_by()` and then rewrite it in `tidytable`. The goal is to grab the
-first two rows of each group using `slice()`, then add a row number
-column using `mutate()`:
+Below is some example `tidytable` code that utilizes `.by` that we’ll
+then compare to its `dplyr` equivalent. The goal is to grab the first
+two rows of each group using `slice.()`, then add a group row number
+column using `mutate.()`:
+
+``` r
+library(tidytable)
+
+test_df <- data.table(x = c("a", "a", "a", "b", "b"))
+
+test_df %>%
+  slice.(1:2, .by = x) %>%
+  mutate.(group_row_num = row_number.(), .by = x)
+#> # tidytable [4 × 2]
+#>   x     group_row_num
+#>   <chr>         <int>
+#> 1 a                 1
+#> 2 a                 2
+#> 3 b                 1
+#> 4 b                 2
+```
+
+Note how `.by` is called in both `slice.()` and `mutate.()`.
+
+Compared to a `dplyr` pipe chain that utilizes `group_by()`, where each
+function operates “by group” until `ungroup()` is called:
 
 ``` r
 library(dplyr)
@@ -112,27 +133,7 @@ test_df %>%
 #> 4 b                 2
 ```
 
-In this case both `slice()` and `mutate()` will operate “by group”. This
-happens until you call `ungroup()` at the end of the chain.
-
-However `data.table` doesn’t “remember” groups between function calls.
-So in `tidytable` you need to call `.by` in each function you want to
-operate “by group”, and you don’t need to call `ungroup()` at the end:
-
-``` r
-library(tidytable)
-
-test_df %>%
-  slice.(1:2, .by = x) %>%
-  mutate.(group_row_num = row_number.(), .by = x)
-#> # tidytable [4 × 2]
-#>   x     group_row_num
-#>   <chr>         <int>
-#> 1 a                 1
-#> 2 a                 2
-#> 3 b                 1
-#> 4 b                 2
-```
+Note that the `ungroup()` call is unnecessary in `tidytable`.
 
 ## `tidyselect` support
 
