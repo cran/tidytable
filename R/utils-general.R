@@ -1,5 +1,49 @@
+# Creates a shallow copy
+# Can add new columns or rename columns without modify-by-reference
+shallow <- function(x) {
+  x[TRUE]
+}
+
+# Create a call to data.table subset "[" (i position)
+call2_i <- function(data, i = NULL, .by = NULL, ...) {
+  call2("[", data, i)
+}
+
+# Create a call to data.table subset "[" (j position)
+call2_j <- function(data, j = NULL, .by = NULL, ...) {
+  dt_expr <- call2("[", data, , j, by = .by, ...)
+  call2("[", dt_expr)
+}
+
+# Call a data.table function
+# Squashes quosures
+call2_dt <- function(.fn, ..., .ns = "data.table") {
+  call <- call2(.fn, ..., .ns = .ns)
+  quo_squash(call)
+}
+
+# Extract environment from quosures and build a data mask
+build_data_mask <- function(x, ...) {
+  if (length(x) == 0) {
+    x <- quo(1)
+  } else if (is_quosures(x)) {
+    x <- x[[1]]
+  }
+  dots <- enexprs(...)
+  new_data_mask(env(get_env(x), !!!dots))
+}
+
+# Repair names of a data.table
+df_name_repair <- function(.df, .name_repair = "unique") {
+  names(.df) <- vec_as_names(
+    names(.df),
+    repair = .name_repair
+  )
+
+  .df
+}
+
 # Shortcut to use rlang quoting/unquoting with data.table/base R expressions
-# Currently used in `R/n.R` and `R/row_number.R`
 # Can be replaced by rlang::inject() if rlang dependency is bumped to v0.4.9
 eval_expr <- function(express, env = caller_env()) {
   eval_tidy(enexpr(express), env = env)
@@ -11,29 +55,9 @@ eval_quo <- function(express, data = NULL, env = caller_env()) {
   eval_tidy(quo_squash(enquo(express)), data = data, env = env)
 }
 
-# Creates a shallow copy to prevent modify-by-reference
-shallow <- function(x, cols = names(x), reset_class = FALSE) {
-  stopifnot(is.data.table(x), all(cols %in% names(x)))
-  ans = vector("list", length(cols))
-  setattr(ans, 'names', data.table::copy(cols))
-  for (col in cols)
-    ans[[col]] = x[[col]]
-  setDT(ans)
-  class = if (!reset_class) data.table::copy(class(x))
-  else c("data.table", "data.frame")
-  setattr(ans, 'class', class)
-  ans[]
-}
-
-# Repair names of a data.table
-df_name_repair <- function(.df, .name_repair = "unique") {
-
-  names(.df) <- vec_as_names(
-    names(.df),
-    repair = .name_repair
-  )
-
-  .df
+# Reduce a list of calls
+call_reduce <- function(x, fun) {
+  Reduce(function(x, y) call2(fun, x, y), x)
 }
 
 # data.table::fsort() with no warning messages
@@ -69,3 +93,17 @@ args_recycle <- function(args) {
 
   args
 }
+
+# deprecated shallow() ------------------------------------------------
+# shallow <- function(x, cols = names(x), reset_class = FALSE) {
+#   stopifnot(is.data.table(x), all(cols %in% names(x)))
+#   ans <- vector("list", length(cols))
+#   setattr(ans, 'names', copy(cols))
+#   for (col in cols) {
+#     ans[[col]] = x[[col]]
+#   }
+#   setDT(ans)
+#   class  <- if (!reset_class) copy(class(x)) else c("data.table", "data.frame")
+#   setattr(ans, 'class', class)
+#   ans[]
+# }

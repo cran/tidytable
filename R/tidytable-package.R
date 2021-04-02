@@ -4,11 +4,10 @@
 #' @import vctrs
 #' @rawNamespace import(rlang, except = `:=`)
 #' @importFrom glue glue
-#' @importFrom lifecycle deprecated deprecate_soft deprecate_stop deprecate_warn expect_deprecated
-#' @importFrom methods as
-#' @importFrom stats as.formula na.omit
-#' @importFrom tibble glimpse trunc_mat
-#' @importFrom utils capture.output head packageName tail type.convert
+#' @importFrom lifecycle deprecated deprecate_soft deprecate_stop
+#' @importFrom pillar glimpse dim_desc tbl_sum
+#' @importFrom stats na.omit
+#' @importFrom utils head packageName tail type.convert
 NULL
 
 #' @docType import
@@ -54,6 +53,9 @@ data.table::data.table
 data.table::`%like%`
 
 #' @export
+data.table::getDTthreads
+
+#' @export
 data.table::setDTthreads
 
 ## rlang ------------------------
@@ -65,4 +67,4 @@ rlang::enquos
 
 ## tibble ------------------------
 #' @export
-tibble::glimpse
+pillar::glimpse

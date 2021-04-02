@@ -12,12 +12,16 @@
 #'
 #' @examples
 #' test_df <- data.table(
-#'   a = c(1,2,3),
-#'   b = c(4,5,6),
-#'   c = c("a","a","b"))
+#'   a = 1:3,
+#'   b = 4:6,
+#'   c = c("a","a","b")
+#' )
 #'
 #' test_df %>%
 #'   arrange.(c, -a)
+#'
+#' test_df %>%
+#'   arrange.(c, desc(a))
 arrange. <- function(.df, ...) {
   UseMethod("arrange.")
 }
@@ -27,22 +31,12 @@ arrange..data.frame <- function(.df, ...) {
   .df <- as_tidytable(.df)
 
   dots <- enquos(...)
-
   if (length(dots) == 0) return(.df)
+  dots <- prep_exprs(dots, .df)
 
-  dots <- map.(dots, desc_as_minus)
+  i <- expr(order(!!!dots))
 
-  eval_quo(
-    .df[order(!!!dots)]
-  )
-}
+  dt_expr <- call2_i(.df, i)
 
-desc_as_minus <- function(quosure) {
-  if (quo_is_call(quosure, "desc.")) {
-    quosure <- new_quosure(
-      node_poke_car(quo_get_expr(quosure), sym("-")),
-      quo_get_env(quosure)
-    )
-  }
-  quosure
+  eval_tidy(dt_expr)
 }

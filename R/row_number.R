@@ -7,10 +7,14 @@
 #' @export
 #'
 #' @examples
-#' test_df <- data.table(x = c(1,1,1))
+#' test_df <- data.table(x = rep(1, 3), y = c("a", "a", "b"))
 #'
 #' test_df %>%
 #'   mutate.(row = row_number.())
+#'
+#' # The dplyr version `row_number()` also works
+#' test_df %>%
+#'   mutate.(row = row_number())
 row_number. <- function() {
-  eval_expr(1:.N, env = caller_env())
+  abort("row_number.() should only be used inside tidytable verbs")
 }

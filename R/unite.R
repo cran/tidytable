@@ -55,22 +55,16 @@ unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRU
   }
 
   if (na.rm) {
-    unite_syms <- syms(unite_cols)
+    cols <- unname(map.(.df[, ..unite_cols], as.character))
+    rows <- transpose(cols)
 
-    middle_na <- paste0(sep, "NA", sep)
-    start_na <- paste0("^NA", sep)
-    end_na <- paste0(sep, "NA$")
+    .united <- map_chr.(rows, ~ paste0(.x[!is.na(.x)], collapse = sep))
 
-    .df <- mutate.(.df, !!col := paste(!!!unite_syms, sep = sep) %>%
-                     str_replace_all.(middle_na, sep) %>%
-                     str_replace_all.(start_na, "") %>%
-                     str_replace_all.(end_na, ""))
+    .df <- mutate.(.df, !!col := .united)
   } else {
     .df <- shallow(.df)
 
-    eval_quo(
-      .df[, !!col := do.call(paste, c(.SD, sep = sep)), .SDcols = !!unite_cols]
-    )
+    .df[, (col) := do.call(paste, c(.SD, sep = sep)), .SDcols = unite_cols]
   }
 
   if (remove) .df <- .df[, -..unite_cols]

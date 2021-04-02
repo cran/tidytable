@@ -72,7 +72,6 @@ pivot_longer..data.frame <- function(.df,
                                      values_transform = list(),
                                      fast_pivot = FALSE,
                                      ...) {
-
   .df <- as_tidytable(.df)
 
   names <- names(.df)
@@ -89,22 +88,46 @@ pivot_longer..data.frame <- function(.df,
   variable_name <- "variable"
 
   if (uses_dot_value) {
+    .df <- shallow(.df)
+
     if (!is.null(names_sep)) {
-      .value <- str_separate(measure_vars, into = names_to, sep = names_sep)$.value
+      names_to_setup <- str_separate(measure_vars, into = names_to, sep = names_sep)
+
+      names_glue <- paste0("{", names_to, "}", collapse = names_sep)
     } else if (!is.null(names_pattern)) {
-      .value <- str_extract(measure_vars, into = names_to, names_pattern)$.value
+      names_to_setup <- str_extract(measure_vars, into = names_to, names_pattern)
+
+      names_glue <- paste0("{", names_to, "}", collapse = "___")
+      new_names <- glue(names_glue, .envir = names_to_setup)
+      setnames(.df, measure_vars, new_names)
+      measure_vars <- new_names
     } else {
       abort("If you use '.value' in `names_to` you must also supply
             `names_sep' or `names_pattern")
     }
 
+    names_to_setup <- crossing.(!!!names_to_setup)
+
+    glued <- glue(names_glue, .envir = names_to_setup)
+
+    na_cols <- setdiff(glued, measure_vars)
+
+    if (length(na_cols) > 0) {
+      .df[, (na_cols) := NA]
+    }
+
+    .value <- names_to_setup$.value
     v_fct <- factor(.value, levels = unique(.value))
-    measure_vars <- split(measure_vars, v_fct)
+
+    measure_vars <- split(glued, v_fct)
     values_to <- names(measure_vars)
     names(measure_vars) <- NULL
 
     if (multiple_names_to) {
       variable_name <- names_to[!names_to == ".value"]
+
+      .value_ids <- unique(names_to_setup[[variable_name]])
+      .value_ids <- vec_rep_each(.value_ids, nrow(.df))
     }
   } else if (multiple_names_to) {
     if (is.null(names_sep) && is.null(names_pattern)) {
@@ -119,7 +142,7 @@ pivot_longer..data.frame <- function(.df,
     variable_name <- names_to
   }
 
-  .df <- melt(
+  .df <- suppressWarnings(melt(
     data = .df,
     id.vars = id_vars,
     measure.vars = measure_vars,
@@ -129,13 +152,15 @@ pivot_longer..data.frame <- function(.df,
     # na.rm = values_drop_na,
     variable.factor = fast_pivot,
     value.factor = FALSE
-  )
+  ))
 
   if (!is.null(names_prefix)) {
-    .df[[variable_name]] <- gsub(paste0("^", names_prefix), "", .df[[variable_name]])
+    .df <- mutate.(.df, !!variable_name := gsub(paste0("^", names_prefix), "", !!sym(variable_name)))
   }
 
-  if (multiple_names_to && !uses_dot_value) {
+  if (multiple_names_to && uses_dot_value) {
+    .df <- mutate.(.df, !!variable_name := !!.value_ids)
+  } else if (multiple_names_to && !uses_dot_value) {
     if (!is.null(names_sep)) {
       .df <- separate.(.df, !!sym(variable_name), into = names_to, sep = names_sep)
     } else {
@@ -150,74 +175,24 @@ pivot_longer..data.frame <- function(.df,
 
   .df <- df_name_repair(.df, .name_repair = names_repair)
 
-  ## names_ptype & names_transform
-  # optionally, cast variables generated from columns
-  cast_vars <- intersect(names_to, names(names_ptypes))
-  if (length(cast_vars) > 0) {
-    cast_calls <- vector("list", length(cast_vars))
-    names(cast_calls) <- cast_vars
-    for (i in seq_along(cast_vars)) {
-      cast_calls[[i]] <- call2("vec_cast", sym(cast_vars[[i]]), names_ptypes[[i]])
-    }
-    .df <- mutate.(.df, !!!cast_calls)
-  }
+  # names_ptype & names_transform
+  .df <- change_types(.df, names_to, names_ptypes, "ptypes")
+  .df <- change_types(.df, names_to, names_transform, "transform")
 
-  # transform cols
-  coerce_vars <- intersect(names_to, names(names_transform))
-  if (length(coerce_vars) > 0) {
-    coerce_calls <- vector("list", length(coerce_vars))
-    names(coerce_calls) <- coerce_vars
-    for (i in seq_along(coerce_vars)) {
-      fn <- as_function(names_transform[[i]])
-      coerce_calls[[i]] <- call2(fn, sym(coerce_vars[[i]]))
-    }
-    .df <- mutate.(.df, !!!coerce_calls)
-  }
-
-  ## values_ptype & values_transform
-  # optionally, cast variables generated from columns
-  cast_vars <- intersect(values_to, names(values_ptypes))
-  if (length(cast_vars) > 0) {
-    cast_calls <- vector("list", length(cast_vars))
-    names(cast_calls) <- cast_vars
-    for (i in seq_along(cast_vars)) {
-      cast_calls[[i]] <- call2("vec_cast", sym(cast_vars[[i]]), values_ptypes[[i]])
-    }
-    .df <- mutate.(.df, !!!cast_calls)
-  }
-
-  # transform cols
-  coerce_vars <- intersect(values_to, names(values_transform))
-  if (length(coerce_vars) > 0) {
-    coerce_calls <- vector("list", length(coerce_vars))
-    names(coerce_calls) <- coerce_vars
-    for (i in seq_along(coerce_vars)) {
-      fn <- as_function(values_transform[[i]])
-      coerce_calls[[i]] <- call2(fn, sym(coerce_vars[[i]]))
-    }
-    .df <- mutate.(.df, !!!coerce_calls)
-  }
+  # values_ptype & values_transform
+  .df <- change_types(.df, values_to, values_ptypes, "ptypes")
+  .df <- change_types(.df, values_to, values_transform, "transform")
 
   # data.table::melt() drops NAs using "&" logic, not "|"
   # Example in tidytable #186 shows why this is necessary
   if (values_drop_na) {
-    filter_calls <- vector("list", length(values_to))
-    for (i in seq_along(filter_calls)) {
-      filter_call <- call2("is.na", sym(values_to[[i]]))
-      filter_call <- call2("!", filter_call)
-      filter_calls[[i]] <- filter_call
-    }
-
+    filter_calls <- map.(syms(values_to), ~ call2("!", call2("is.na", .x)))
     filter_expr <- call_reduce(filter_calls, "|")
 
     .df <- filter.(.df, !!filter_expr)
   }
 
   as_tidytable(.df)
-}
-
-call_reduce <- function(x, fun) {
-  Reduce(function(x, y) call2(fun, x, y), x)
 }
 
 str_extract <- function(x, into, regex, convert = FALSE) {
@@ -235,5 +210,28 @@ str_separate <- function(x, into, sep, convert = FALSE) {
   names(out) <- as_utf8_character(into)
 
   out
+}
+
+change_types <- function(.df, .to, .list, .ptypes_transform) {
+  vars <- intersect(.to, names(.list))
+  if (length(vars) > 0) {
+    calls <- vector("list", length(vars))
+    names(calls) <- vars
+    if (.ptypes_transform == "ptypes") {
+      .fn <- "vec_cast"
+      for (i in seq_along(vars)) {
+        calls[[i]] <- call2(.fn, sym(vars[[i]]), .list[[i]])
+      }
+    } else if (.ptypes_transform == "transform") {
+      for (i in seq_along(vars)) {
+        .fn <- as_function(.list[[i]])
+        calls[[i]] <- call2(.fn, sym(vars[[i]]))
+      }
+    } else {
+      abort("Please specify ptypes or transform")
+    }
+    .df <- mutate.(.df, !!!calls)
+  }
+  .df
 }
 

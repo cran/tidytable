@@ -168,14 +168,23 @@ test_that("can use names_prefix", {
 })
 
 test_that("can pivot to multiple measure cols", {
-  out <- pivot_longer.(
-    anscombe,
-    everything(),
-    names_to = c(".value", "set"),
-    names_pattern = "(.)(.)"
-  )
+  test_df <- tidytable(x_3 = 3, x_4 = 4, y_3 = 3, y_4 = 4)
 
-  expect_named(out, c("set", "x", "y"))
+  out <- test_df %>%
+    pivot_longer.(names_to = c(".value", "id"), names_sep = "_")
+
+  expect_named(out, c("id", "x", "y"))
+  expect_equal(out$id, c("3", "4"))
+})
+
+test_that("balanced data can have different column order", {
+  test_df <- tidytable(x_3 = 3, x_4 = 4, y_4 = 4, y_3 = 3)
+
+  out <- test_df %>%
+    pivot_longer.(names_to = c(".value", "id"), names_sep = "_")
+
+  expect_named(out, c("id", "x", "y"))
+  expect_equal(out$id, c("3", "4"))
 })
 
 test_that(".value can be at any position in `names_to`", {
@@ -202,7 +211,7 @@ test_that(".value can be at any position in `names_to`", {
   expect_identical(value_first, value_second)
 })
 
-test_that("can handle missing combinations", {
+test_that("works with unbalanced data - 1", {
   dt <- tidytable(
     id = c("A", "B"),
     x_1 = c(1, 3),
@@ -213,7 +222,41 @@ test_that("can handle missing combinations", {
 
   expect_named(out, c("id", "n", "x", "y"))
   expect_equal(out$x, c(1, 3, 2, 4))
-  expect_equal(out$y, c("a", "b", NA, NA))
+  expect_equal(out$y, c(NA, NA, "a", "b"))
+})
+
+test_that("works with unbalanced data - 2", {
+  test_df <- tidytable(x2 = 2, x3 = 3, y5 = 5, y6 = 6)
+  out <- test_df %>%
+    pivot_longer.(names_to = c(".value", "id"), names_pattern = "(.)(.)")
+
+  expect_named(out, c("id", "x", "y"))
+  expect_equal(out$id, c("2", "3", "5", "6"))
+  expect_equal(out$x, c(2, 3, NA, NA))
+  expect_equal(out$y, c(NA, NA, 5, 6))
+})
+
+test_that("works with unbalanced data - 3", {
+  set.seed(2334)
+  test_df <- data.table(
+    a_alpha = rnorm(3), a_gamma = rnorm(3),
+    b_beta = rnorm(3), b_gamma = rnorm(3),
+    groups = 1:3
+  )
+
+  out <- test_df %>%
+    pivot_longer.(-groups, names_to = c(".value", "labels"), names_sep = "_")
+
+  expect_equal(out$groups, rep(1:3, 3))
+  expect_equal(out$labels, c(rep("alpha", 3), rep("beta", 3), rep("gamma", 3)))
+  expect_equal(
+    round(out$a, 3),
+    c(-0.118, 1.237, 0.809, NA, NA, NA, -0.766, -0.592, 0.528)
+  )
+  expect_equal(
+    round(out$b, 3),
+    c(NA, NA, NA, 1.682, -0.574, -0.057, -0.706, 0.002, 1.064)
+  )
 })
 
 test_that("works with names_to = '.value'", {

@@ -18,10 +18,11 @@
 #' @md
 #' @examples
 #' test_df <- data.table(
-#'   a = c(1,2,3),
-#'   b = c(4,5,6),
+#'   a = 1:3,
+#'   b = 4:6,
 #'   c = c("a","a","b"),
-#'   d = c("a","a","b"))
+#'   d = c("a","a","b")
+#' )
 #'
 #' test_df %>%
 #'   summarize.(avg_a = mean(a),
@@ -37,34 +38,24 @@ summarize. <- function(.df, ..., .by = NULL, .sort = FALSE) {
 
 #' @export
 summarize..data.frame <- function(.df, ..., .by = NULL, .sort = FALSE) {
-
   .df <- as_tidytable(.df)
 
   dots <- enquos(...)
 
-  data_env <- env(quo_get_env(dots[[1]]), .df = .df)
+  mask <- build_data_mask(dots)
 
-  # Needed so n.() works
-  dots <- map.(dots, replace_n_dot)
+  dots <- prep_exprs(dots, .df)
 
   .by <- select_vec_chr(.df, {{ .by }})
 
-  assign <- map2.(syms(names(dots)), dots, ~ call2("<-", .x, .y))
-  output <- call2("list", !!!syms(names(dots)))
-  expr <- call2("{", !!!assign, output)
+  j <- expr(list(!!!dots))
+
+  dt_expr <- call2_j(.df, j, .by)
+
+  .df <- eval_tidy(dt_expr, mask, caller_env())
 
   if (.sort) {
-    .df <- eval_quo(
-      .df[, !!expr, keyby = !!.by],
-      new_data_mask(data_env), env = caller_env()
-    )
-
-    setkey(.df, NULL)
-  } else {
-    .df <- eval_quo(
-      .df[, !!expr, by = !!.by],
-      new_data_mask(data_env), env = caller_env()
-    )
+    .df <- arrange.(.df, !!!syms(.by))
   }
 
   df_name_repair(.df, .name_repair = "unique")
@@ -73,14 +64,3 @@ summarize..data.frame <- function(.df, ..., .by = NULL, .sort = FALSE) {
 #' @export
 #' @rdname summarize.
 summarise. <- summarize.
-
-replace_n_dot <- function(quosure) {
-  quo_string <- quo_text(quosure)
-
-  if (str_detect.(quo_string, "n.[(]")) {
-    parse_expr(str_replace.(quo_string, "n.\\()", ".N"))
-  } else {
-    quosure
-  }
-
-}
