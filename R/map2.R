@@ -2,8 +2,12 @@
 #' @rdname map.
 map2. <- function(.x, .y, .f, ...) {
   .f <- as_function(.f)
-
-  mapply(.f, .x, .y, MoreArgs = list(...), SIMPLIFY = FALSE)
+  out <- mapply(.f, .x, .y, MoreArgs = list(...), SIMPLIFY = FALSE)
+  if (length(out) == length(.x)) {
+    set_names(out, names(.x))
+  } else {
+    set_names(out, NULL)
+  }
 }
 
 #' @export
@@ -34,7 +38,6 @@ map2_chr. <- function(.x, .y, .f, ...) {
 #' @rdname map.
 map2_dfc. <- function(.x, .y, .f, ...) {
   result_list <- map2.(.x, .y, .f, ...)
-
   bind_cols.(result_list)
 }
 
@@ -42,7 +45,6 @@ map2_dfc. <- function(.x, .y, .f, ...) {
 #' @rdname map.
 map2_dfr. <- function(.x, .y, .f, ..., .id = NULL) {
   result_list <- map2.(.x, .y, .f, ...)
-
   bind_rows.(result_list, .id = .id)
 }
 

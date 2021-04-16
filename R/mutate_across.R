@@ -52,16 +52,15 @@ mutate_across..data.frame <- function(.df, .cols = everything(), .fns = NULL, ..
 
   .by <- enquo(.by)
 
-  .cols <- list(enquo(.cols), quo(-!!.by))
-  .cols <- select_dots_chr(.df, !!!.cols)
+  .cols <- get_across_cols(.df, enquo(.cols), {{ .by }})
   if (length(.cols) == 0) return(.df)
 
   dots <- enquos(...)
 
-  .fun <- enexpr(.fns)
-  if (is_null(.fun)) return(.df)
+  .fns <- enexpr(.fns)
+  if (is_null(.fns)) return(.df)
 
-  call_list <- across_calls(.fns, .fun, .cols, .names, dots)
+  call_list <- across_calls(.fns, .cols, .names, dots)
 
   dt_expr <- call2("mutate.", .df, !!!call_list, .by = .by, .ns = "tidytable")
 

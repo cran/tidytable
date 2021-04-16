@@ -46,7 +46,6 @@ replace_na..default <- function(.x, replace = NA) {
 
 #' @export
 replace_na..data.frame <- function(.x, replace = list()) {
-
   .x <- as_tidytable(.x)
 
   stopifnot(vec_is_list(replace))
@@ -55,14 +54,16 @@ replace_na..data.frame <- function(.x, replace = list()) {
 
   replace_vars <- intersect(names(replace), names(.x))
 
+  calls <- vector("list", length(replace_vars))
+  names(calls) <- replace_vars
   for (i in seq_along(replace_vars)) {
-
-    .var <- replace_vars[[i]]
-
-    .replace_val <- replace[[i]]
-
-    .x[[.var]] <- replace_na.(.x[[.var]], .replace_val)
+    calls[[i]] <- call2(
+      "replace_na.", sym(replace_vars[[i]]), replace[[i]],
+      .ns = "tidytable"
+    )
   }
+
+  .x <- mutate.(.x, !!!calls)
 
   .x
 }

@@ -1,4 +1,4 @@
-#' Improved data.table::fcase()
+#' data.table::fcase() with vectorized default
 #'
 #' @description
 #' This function allows you to use multiple if/else statements in one call.
@@ -19,7 +19,7 @@
 #'                          x < 7, 2,
 #'                          default = 3))
 case. <- function(..., default = NA) {
-  dots <- enquos(...)
+  dots <- list2(...)
   dots_length <- length(dots)
 
   odd_index <- as.logical(seq_len(dots_length) %% 2)
@@ -40,7 +40,7 @@ case. <- function(..., default = NA) {
   for (i in rev(seq_along(conditions))) {
     calls <- call2(
       "ifelse.",
-      call2('%|%', conditions[[i]], FALSE),
+      call2('%|%', conditions[[i]], FALSE, .ns = "rlang"),
       values[[i]],
       calls
     )

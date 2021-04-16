@@ -36,36 +36,38 @@ mutate..data.frame <- function(.df, ..., .by = NULL) {
   .df <- as_tidytable(.df)
   .df <- shallow(.df)
 
+  .by <- enquo(.by)
+
   dots <- enquos(...)
   if (length(dots) == 0) return(.df)
 
   mask <- build_data_mask(dots)
 
-  dots <- prep_exprs(dots, .df)
-
-  .by <- enquo(.by)
-
   if (quo_is_null(.by)) {
-    dots_names <- names(dots)
-
     for (i in seq_along(dots)) {
-      .col_name <- dots_names[[i]]
-      .val <- dots[[i]]
+      dots_i <- prep_exprs(dots[i], .df, !!.by)
+      dots_i_names <- names(dots_i)
 
-      # vec_recycle() prevents modify-by-reference if the column already exists in the data.table
-        ## Fixes case when user supplies a single value ex. 1, -1, "a"
-      # !is_null(val) allows for columns to be deleted using mutate.(.df, col = NULL)
-      if (.col_name %in% names(.df) && !is_null(.val)) {
-        j <- expr(!!.col_name := vctrs::vec_recycle(!!.val, .N))
-      } else {
-        j <- expr(!!.col_name := !!.val)
-      }
+      dots_i <- map2.(dots_i, dots_i_names, ~ mutate_prep(.df, .x, .y))
+
+      j <- expr(':='(!!!dots_i))
 
       dt_expr <- call2_j(.df, j)
 
       .df <- eval_tidy(dt_expr, mask, caller_env())
     }
   } else {
+    if (length(dots) > 1) {
+      across_flag <- map_lgl.(dots[-1], quo_is_call, "across.")
+
+      if (any(across_flag)) {
+        abort("across.() can only be used in the first position of mutate.()
+              when `.by` is used.")
+      }
+    }
+
+    dots <- prep_exprs(dots, .df, !!.by)
+
     .by <- select_vec_chr(.df, !!.by)
 
     needs_copy <- any(names(dots) %in% names(.df))
@@ -96,4 +98,14 @@ mutate..data.frame <- function(.df, ..., .by = NULL) {
 
   }
   .df[]
+}
+
+# vec_recycle() prevents modify-by-reference if the column already exists in the data.table
+# Fixes case when user supplies a single value ex. 1, -1, "a"
+# !is_null(val) allows for columns to be deleted using mutate.(.df, col = NULL)
+mutate_prep <- function(data, dot, dot_name) {
+  if (dot_name %in% names(data) && !is_null(dot)) {
+    dot <- call2("vec_recycle", dot, expr(.N), .ns = "vctrs")
+  }
+  dot
 }

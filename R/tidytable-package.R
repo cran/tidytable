@@ -3,7 +3,7 @@
 #' @import tidyselect
 #' @import vctrs
 #' @rawNamespace import(rlang, except = `:=`)
-#' @importFrom glue glue
+#' @importFrom glue glue glue_data
 #' @importFrom lifecycle deprecated deprecate_soft deprecate_stop
 #' @importFrom pillar glimpse dim_desc tbl_sum
 #' @importFrom stats na.omit
@@ -12,9 +12,9 @@ NULL
 
 #' @docType import
 
-## Reexports ------------------------
+### reexports ------------------------
 
-## tidyselect ------------------------
+# tidyselect ------------------------
 #' @export
 tidyselect::starts_with
 
@@ -42,7 +42,7 @@ tidyselect::num_range
 #' @export
 tidyselect::last_col
 
-## data.table ------------------------
+# data.table ------------------------
 #' @export
 data.table::`%between%`
 
@@ -58,13 +58,13 @@ data.table::getDTthreads
 #' @export
 data.table::setDTthreads
 
-## rlang ------------------------
+# rlang ------------------------
 #' @export
 rlang::enquo
 
 #' @export
 rlang::enquos
 
-## tibble ------------------------
+# pillar ------------------------
 #' @export
 pillar::glimpse

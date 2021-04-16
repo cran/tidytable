@@ -1,8 +1,7 @@
 # Build across calls
-across_calls <- function(.fns, .fun, .cols, .names, dots) {
-
-  if (!is.list(.fns)) {
-    call_list <- map.(.cols, ~ fn_to_expr(.fun, .x, !!!dots))
+across_calls <- function(.fns, .cols, .names, dots) {
+  if (!is_call(.fns, c("list", "list2"))) {
+    call_list <- map.(.cols, ~ fn_to_expr(.fns, .x, !!!dots))
 
     .names <- .names %||% "{.col}"
 
@@ -11,13 +10,15 @@ across_calls <- function(.fns, .fun, .cols, .names, dots) {
       repair = "check_unique", quiet = TRUE
     )
   } else {
+    .fns <- .fns[-1]
+
     names_flag <- have_name(.fns)
 
     if (!all(names_flag)) names(.fns)[!names_flag] <- seq_len(length(.fns))[!names_flag]
 
     fn_names <- names(.fns)
 
-    .args <- unname(.fun[-1])
+    .args <- unname(.fns)
 
     call_list <- vector("list", length(.cols) * length(.args))
     k <- 1
@@ -53,6 +54,8 @@ fn_to_expr <- function(.fn, .col, ...) {
     call <- f_rhs(.fn)
     call <- replace_dot(call, sym(.col))
     call
+  } else if (is_null(.fn)) {
+    sym(.col)
   } else {
     abort(".fns needs to be a list, function name, or formula")
   }
@@ -68,4 +71,13 @@ replace_dot <- function(call, sym) {
   } else {
     call
   }
+}
+
+# Get cols for c_across/if_all/if_any/across
+# If cols is not provided defaults to everything()
+# Removes .by columns from selection
+get_across_cols <- function(data, call_cols, .by = NULL) {
+  .cols <- call_cols %||% quote(everything())
+  .cols <- expr(c(!!.cols, - {{ .by }}))
+  select_vec_chr(data, !!.cols)
 }

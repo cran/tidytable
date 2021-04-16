@@ -24,7 +24,6 @@
 #' map_chr.(c(1,2,3), as.character)
 map. <- function(.x, .f, ...) {
   .f <- as_function(.f)
-
   lapply(.x, .f, ...)
 }
 
@@ -32,7 +31,6 @@ map. <- function(.x, .f, ...) {
 #' @rdname map.
 map_lgl. <- function(.x, .f, ...) {
   .f <- as_function(.f)
-
   vapply(.x, .f, logical(1), ...)
 }
 
@@ -40,7 +38,6 @@ map_lgl. <- function(.x, .f, ...) {
 #' @rdname map.
 map_int. <- function(.x, .f, ...) {
   .f <- as_function(.f)
-
   vapply(.x, .f, integer(1), ...)
 }
 
@@ -48,7 +45,6 @@ map_int. <- function(.x, .f, ...) {
 #' @rdname map.
 map_dbl. <- function(.x, .f, ...) {
   .f <- as_function(.f)
-
   vapply(.x, .f, double(1), ...)
 }
 
@@ -56,14 +52,12 @@ map_dbl. <- function(.x, .f, ...) {
 #' @rdname map.
 map_chr. <- function(.x, .f, ...) {
   .f <- as_function(.f)
-
   vapply(.x, .f, character(1), ...)
 }
 
 #' @export
 #' @rdname map.
 map_dfc. <- function(.x, .f, ...) {
-  .f <- as_function(.f)
   result_list <- map.(.x, .f, ...)
   bind_cols.(result_list)
 }
@@ -71,10 +65,7 @@ map_dfc. <- function(.x, .f, ...) {
 #' @export
 #' @rdname map.
 map_dfr. <- function(.x, .f, ..., .id = NULL) {
-  .f <- as_function(.f)
-
   result_list <- map.(.x, .f, ...)
-
   bind_rows.(result_list, .id = .id)
 }
 
@@ -85,9 +76,6 @@ map_df. <- map_dfr.
 #' @export
 #' @rdname map.
 walk. <- function(.x, .f, ...) {
-  .f <- as_function(.f)
-
   map.(.x, .f, ...)
-
   invisible(.x)
 }

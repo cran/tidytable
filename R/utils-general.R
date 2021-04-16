@@ -5,7 +5,7 @@ shallow <- function(x) {
 }
 
 # Create a call to data.table subset "[" (i position)
-call2_i <- function(data, i = NULL, .by = NULL, ...) {
+call2_i <- function(data, i = NULL) {
   call2("[", data, i)
 }
 
@@ -29,8 +29,7 @@ build_data_mask <- function(x, ...) {
   } else if (is_quosures(x)) {
     x <- x[[1]]
   }
-  dots <- enexprs(...)
-  new_data_mask(env(get_env(x), !!!dots))
+  new_data_mask(env(get_env(x), ...))
 }
 
 # Repair names of a data.table

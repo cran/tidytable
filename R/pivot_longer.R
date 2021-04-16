@@ -84,11 +84,18 @@ pivot_longer..data.frame <- function(.df,
 
   multiple_names_to <- length(names_to) > 1
   uses_dot_value <- ".value" %in% names_to
+  na_in_names_to <- is.na(names_to)
 
   variable_name <- "variable"
 
   if (uses_dot_value) {
     .df <- shallow(.df)
+
+    if (multiple_names_to && any(na_in_names_to)) {
+      names_to[na_in_names_to] <- ".id"
+    } else if (!multiple_names_to) {
+      abort("The use of `names_to = '.value'` is not yet supported")
+    }
 
     if (!is.null(names_sep)) {
       names_to_setup <- str_separate(measure_vars, into = names_to, sep = names_sep)
@@ -98,7 +105,7 @@ pivot_longer..data.frame <- function(.df,
       names_to_setup <- str_extract(measure_vars, into = names_to, names_pattern)
 
       names_glue <- paste0("{", names_to, "}", collapse = "___")
-      new_names <- glue(names_glue, .envir = names_to_setup)
+      new_names <- glue_data(names_to_setup, names_glue)
       setnames(.df, measure_vars, new_names)
       measure_vars <- new_names
     } else {
@@ -106,9 +113,15 @@ pivot_longer..data.frame <- function(.df,
             `names_sep' or `names_pattern")
     }
 
-    names_to_setup <- crossing.(!!!names_to_setup)
+    .value <- unique(names_to_setup$.value)
 
-    glued <- glue(names_glue, .envir = names_to_setup)
+    if (multiple_names_to) {
+      variable_name <- names_to[!names_to == ".value"]
+      .value_ids <- f_sort(unique(names_to_setup[[variable_name]]))
+      names_to_setup <- expand_grid.(.value = .value, !!variable_name := .value_ids)
+    }
+
+    glued <- glue_data(names_to_setup, names_glue)
 
     na_cols <- setdiff(glued, measure_vars)
 
@@ -124,8 +137,6 @@ pivot_longer..data.frame <- function(.df,
     names(measure_vars) <- NULL
 
     if (multiple_names_to) {
-      variable_name <- names_to[!names_to == ".value"]
-
       .value_ids <- unique(names_to_setup[[variable_name]])
       .value_ids <- vec_rep_each(.value_ids, nrow(.df))
     }
@@ -142,6 +153,12 @@ pivot_longer..data.frame <- function(.df,
     variable_name <- names_to
   }
 
+  if (values_drop_na && !multiple_names_to) {
+    na_rm <- TRUE
+  } else {
+    na_rm <- FALSE
+  }
+
   .df <- suppressWarnings(melt(
     data = .df,
     id.vars = id_vars,
@@ -149,9 +166,9 @@ pivot_longer..data.frame <- function(.df,
     variable.name = variable_name,
     value.name = values_to,
     ...,
-    # na.rm = values_drop_na,
+    na.rm = na_rm,
     variable.factor = fast_pivot,
-    value.factor = FALSE
+    value.factor = TRUE
   ))
 
   if (!is.null(names_prefix)) {
@@ -159,6 +176,10 @@ pivot_longer..data.frame <- function(.df,
   }
 
   if (multiple_names_to && uses_dot_value) {
+    if (any(na_in_names_to)) {
+      .value_ids <- NULL
+    }
+
     .df <- mutate.(.df, !!variable_name := !!.value_ids)
   } else if (multiple_names_to && !uses_dot_value) {
     if (!is.null(names_sep)) {
@@ -185,7 +206,7 @@ pivot_longer..data.frame <- function(.df,
 
   # data.table::melt() drops NAs using "&" logic, not "|"
   # Example in tidytable #186 shows why this is necessary
-  if (values_drop_na) {
+  if (values_drop_na && multiple_names_to) {
     filter_calls <- map.(syms(values_to), ~ call2("!", call2("is.na", .x)))
     filter_expr <- call_reduce(filter_calls, "|")
 
