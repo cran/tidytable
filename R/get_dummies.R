@@ -52,13 +52,12 @@ get_dummies. <- function(.df,
 }
 
 #' @export
-get_dummies..data.frame <- function(.df,
-                                    cols = c(where(is.character), where(is.factor)),
-                                    prefix = TRUE,
-                                    prefix_sep = "_",
-                                    drop_first = FALSE,
-                                    dummify_na = TRUE) {
-  .df <- as_tidytable(.df)
+get_dummies..tidytable <- function(.df,
+                                   cols = c(where(is.character), where(is.factor)),
+                                   prefix = TRUE,
+                                   prefix_sep = "_",
+                                   drop_first = FALSE,
+                                   dummify_na = TRUE) {
   .df <- shallow(.df)
 
   vec_assert(prefix, logical(), 1)
@@ -66,25 +65,34 @@ get_dummies..data.frame <- function(.df,
   vec_assert(drop_first, logical(), 1)
   vec_assert(dummify_na, logical(), 1)
 
-  cols <- select_vec_sym(.df, {{ cols }})
+  cols <- tidyselect_syms(.df, {{ cols }})
 
   original_cols <- copy(names(.df))
 
-  ordered_cols <- character(0)
+  ordered_cols <- character()
 
   for (col in cols) {
 
     col_name <- as.character(col)
 
-    if (drop_first) unique_vals <- vec_unique(as.character(.df[[col_name]]))[-1]
-    else unique_vals <- vec_unique(as.character(.df[[col_name]]))
+    if (drop_first) {
+      unique_vals <- vec_unique(as.character(.df[[col_name]]))[-1]
+    } else {
+      unique_vals <- vec_unique(as.character(.df[[col_name]]))
+    }
 
     # If NAs need dummies, convert to character string "NA" for col name creation
-    if (dummify_na) unique_vals <- unique_vals %|% "NA"
-    else unique_vals <- unique_vals[!is.na(unique_vals)]
+    if (dummify_na) {
+      unique_vals <- unique_vals %|% "NA"
+    } else {
+      unique_vals <- unique_vals[!is.na(unique_vals)]
+    }
 
-    if (prefix) new_names <- str_c.(col_name, unique_vals, sep = prefix_sep)
-    else new_names <- unique_vals
+    if (prefix) {
+      new_names <- str_c.(col_name, unique_vals, sep = prefix_sep)
+    } else {
+      new_names <- unique_vals
+    }
 
     # Remove "NA" from unique vals after new_names columns are made
     not_na_cols <- new_names[unique_vals != "NA"]
@@ -100,7 +108,6 @@ get_dummies..data.frame <- function(.df,
     # Since the prior step doesn't recognize NA as a character,
     # an extra step is needed to flag NA vals
     if (dummify_na) {
-
       na_col <- new_names[!new_names %in% not_na_cols]
 
       if (length(na_col) > 0) {
@@ -120,6 +127,17 @@ get_dummies..data.frame <- function(.df,
   setcolorder(.df, final_order)
 
   .df
+}
+
+#' @export
+get_dummies..data.frame <- function(.df,
+                                    cols = c(where(is.character), where(is.factor)),
+                                    prefix = TRUE,
+                                    prefix_sep = "_",
+                                    drop_first = FALSE,
+                                    dummify_na = TRUE) {
+  .df <- as_tidytable(.df)
+  get_dummies.(.df, {{ cols }}, prefix, prefix_sep, drop_first, dummify_na)
 }
 
 globalVariables("where")

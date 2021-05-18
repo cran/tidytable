@@ -19,7 +19,7 @@
 #'   a = c(1, NA, 3, 4, 5),
 #'   b = c(NA, 2, NA, NA, 5),
 #'   groups = c("a", "a", "a", "b", "b")
-#'  )
+#' )
 #'
 #' test_df %>%
 #'   fill.(a, b)
@@ -36,16 +36,14 @@ fill. <- function(.df, ...,
 }
 
 #' @export
-fill..data.frame <- function(.df, ...,
-                             .direction = c("down", "up", "downup", "updown"),
-                             .by = NULL) {
-  .df <- as_tidytable(.df)
-
+fill..tidytable <- function(.df, ...,
+                            .direction = c("down", "up", "downup", "updown"),
+                            .by = NULL) {
   .by <- enquo(.by)
 
   .direction <- arg_match(.direction)
 
-  select_cols <- select_dots_chr(.df, ...)
+  select_cols <- tidyselect_names(.df, ...)
 
   with_by <- !quo_is_null(.by)
 
@@ -56,13 +54,21 @@ fill..data.frame <- function(.df, ...,
     .df <- shallow(.df)
   }
 
-  .by <- select_vec_chr(.df, !!.by)
+  .by <- tidyselect_names(.df, !!.by)
 
   .df[, (select_cols) := lapply(.SD, fill_na, .direction), .SDcols = select_cols, by = .by]
 
   if (with_by) setcolorder(.df, col_order)
 
   .df[]
+}
+
+#' @export
+fill..data.frame <- function(.df, ...,
+                             .direction = c("down", "up", "downup", "updown"),
+                             .by = NULL) {
+  .df <- as_tidytable(.df)
+  fill.(.df, ..., .direction = .direction, .by = {{ .by }})
 }
 
 fill_na <- function(x, direction) {

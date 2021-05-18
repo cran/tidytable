@@ -1,14 +1,10 @@
 # "Prepare" quosures/expressions for use in a data.table "[" call
-# Allows use of functions like n()/n.() and c_across()/c_across.()
-  ## Replaces these functions with the necessary data.table translations
+# Allows the use of functions like n() and across.()
+# Replaces these functions with the necessary data.table translations
 # General idea follows dt_squash found here: https://github.com/tidyverse/dtplyr/blob/master/R/tidyeval.R
 prep_exprs <- function(x, data, .by = NULL) {
-  if (is.list(x)) {
-    x <- lapply(x, prep_expr, data, {{ .by }})
-    squash(x)
-  } else {
-    prep_expr(x, data, {{ .by }})
-  }
+  x <- lapply(x, prep_expr, data, {{ .by }})
+  squash(x)
 }
 
 prep_expr <- function(x, data, .by = NULL) {
@@ -24,8 +20,10 @@ prep_expr <- function(x, data, .by = NULL) {
     x[[1]] <- sym("-")
     x[[2]] <- get_expr(x[[2]])
     x
-  } else if (is_call(x, c("row_number.", "row_number"))) {
+  } else if (is_call(x, c("row_number.", "row_number", "cur_group_rows.", "cur_group_rows"))) {
     quote(1:.N)
+  } else if (is_call(x, c("cur_group_id.", "cur_group_id"))) {
+    quote(.GRP)
   } else if (is_call(x, c("ifelse", "if_else"))) {
     if (is_call(x, "if_else")) {
       x <- match.call(internal_if_else, x)
@@ -36,7 +34,7 @@ prep_expr <- function(x, data, .by = NULL) {
     x[[1]] <- quote(ifelse.)
     x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }})
     x
-  } else if (is_call(x, "case_when")) {
+  } else if (is_call(x, "case_when", ns = "")) {
     x[[1]] <- quote(case_when.)
     x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }})
     x

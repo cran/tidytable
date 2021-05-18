@@ -4,7 +4,7 @@
 \alias{mutate.}
 \title{Add/modify/delete columns}
 \usage{
-mutate.(.df, ..., .by = NULL)
+mutate.(.df, ..., .by = NULL, .keep = "all", .before = NULL, .after = NULL)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -12,6 +12,21 @@ mutate.(.df, ..., .by = NULL)
 \item{...}{Columns to add/modify}
 
 \item{.by}{Columns to group by}
+
+\item{.keep}{\emph{experimental}:
+This is an experimental argument that allows you to control which columns
+from \code{.df} are retained in the output:
+\itemize{
+\item \code{"all"}, the default, retains all variables.
+\item \code{"used"} keeps any variables used to make new variables; it's useful
+for checking your work as it displays inputs and outputs side-by-side.
+\item \code{"unused"} keeps only existing variables \strong{not} used to make new
+variables.
+\item \code{"none"}, only keeps grouping keys (like \code{\link[=transmute.]{transmute.()}}).
+}}
+
+\item{.before, .after}{Optionally indicate where new columns should be placed.
+Defaults to the right side of the data frame.}
 }
 \description{
 With \code{mutate.()} you can do 3 things:
@@ -23,9 +38,9 @@ With \code{mutate.()} you can do 3 things:
 }
 \examples{
 test_df <- data.table(
-  a = c(1,2,3),
-  b = c(4,5,6),
-  c = c("a","a","b")
+  a = 1:3,
+  b = 4:6,
+  c = c("a", "a", "b")
 )
 
 test_df \%>\%
@@ -36,4 +51,10 @@ test_df \%>\%
   mutate.(double_a = a * 2,
           avg_a = mean(a),
           .by = c)
+
+test_df \%>\%
+  mutate.(double_a = a * 2, .keep = "used")
+
+test_df \%>\%
+  mutate.(double_a = a * 2, .after = a)
 }
