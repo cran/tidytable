@@ -23,7 +23,7 @@ call2_dt <- function(.fn, ..., .ns = "data.table") {
 }
 
 # Extract environment from quosures to build the evaluation environment
-build_dt_env <- function(x, ...) {
+get_dt_env <- function(x, ...) {
   if (length(x) == 0) {
     dt_env <- caller_env(2)
   } else if (is_quosures(x)) {
@@ -46,14 +46,7 @@ df_name_repair <- function(.df, .name_repair = "unique") {
     names(.df),
     repair = .name_repair
   )
-
   .df
-}
-
-# Shortcut to use rlang quoting/unquoting with data.table/base R expressions
-# Can be replaced by rlang::inject() if rlang dependency is bumped to v0.4.9
-eval_expr <- function(express, env = caller_env()) {
-  eval_tidy(enexpr(express), env = env)
 }
 
 # Allows use of quosures inside data.tables
@@ -67,11 +60,15 @@ call_reduce <- function(x, fun) {
   Reduce(function(x, y) call2(fun, x, y), x)
 }
 
-# data.table::fsort() with no warning messages
+# radix sort
+# proxy for data.table::fsort since negative values aren't supported, #282
 f_sort <- function(x, decreasing = FALSE, na.last = FALSE) {
-  suppressWarnings(
-    fsort(x, decreasing = decreasing, na.last = na.last)
-  )
+  # # Can switch to data.table::fsort once negative doubles are handled
+  # suppressWarnings(
+  #   fsort(x, decreasing = decreasing, na.last = na.last)
+  # )
+
+  sort(x, decreasing = decreasing, na.last = na.last, method = "radix")
 }
 
 # pmap - for internal use only
@@ -99,6 +96,13 @@ args_recycle <- function(args) {
   args[to_recycle] <- map.(args[to_recycle], function(x) rep.int(x, n))
 
   args
+}
+
+tidytable_restore <- function(x, to) {
+  # Make sure auto-index is reset since vec_restore reapplies the original index
+  # https://github.com/Rdatatable/data.table/issues/5042
+  attr(to, "index") <- NULL
+  vec_restore(x, to)
 }
 
 # deprecated shallow() ------------------------------------------------

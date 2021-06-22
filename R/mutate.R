@@ -60,7 +60,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
   dots <- enquos(...)
   if (length(dots) == 0) return(.df)
 
-  dt_env <- build_dt_env(dots)
+  dt_env <- get_dt_env(dots)
 
   .before <- enquo(.before)
   .after <- enquo(.after)
@@ -73,6 +73,8 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
   if (quo_is_null(.by)) {
     for (i in seq_along(dots)) {
       dots_i <- prep_exprs(dots[i], .df, !!.by)
+      if (length(dots_i) == 0) next
+      dots_i <- exprs_auto_name(dots_i)
       dots_i_names <- names(dots_i)
 
       dots_i <- map2.(dots_i, dots_i_names, ~ mutate_prep(.df, .x, .y))
@@ -85,9 +87,9 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
     }
   } else {
     if (length(dots) > 1) {
-      across_flag <- map_lgl.(dots[-1], quo_is_call, "across.")
+      across_bool <- map_lgl.(dots[-1], quo_is_call, "across.")
 
-      if (any(across_flag)) {
+      if (any(across_bool)) {
         abort("across.() can only be used in the first position of mutate.()
               when `.by` is used.")
       }
@@ -101,25 +103,30 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
     if (needs_copy) .df <- copy(.df)
 
     # Check for NULL inputs so columns can be deleted
-    null_flag <- map_lgl.(dots, is_null)
-    if (any(null_flag)) {
-      null_dots <- dots[null_flag]
+    null_bool <- map_lgl.(dots, is_null)
+    any_null <- any(null_bool)
 
-      dots <- dots[!null_flag]
+    if (any_null) {
+      null_dots <- dots[null_bool]
 
-      j <- call2(":=", !!!null_dots)
-      dt_expr <- call2_j(.df, j)
-
-      .df <- eval_tidy(dt_expr, env = dt_env)
+      dots <- dots[!null_bool]
     }
 
     if (length(dots) > 0) {
+      dots <- exprs_auto_name(dots)
       dots_names <- names(dots)
       assign <- map2.(syms(dots_names), dots, ~ call2("<-", .x, .y))
       output <- call2("list", !!!syms(dots_names))
       expr <- call2("{", !!!assign, output)
       j <- call2(":=", call2("c", !!!dots_names), expr)
       dt_expr <- call2_j(.df, j, .by)
+
+      .df <- eval_tidy(dt_expr, env = dt_env)
+    }
+
+    if (any_null) {
+      j <- call2(":=", !!!null_dots)
+      dt_expr <- call2_j(.df, j)
 
       .df <- eval_tidy(dt_expr, env = dt_env)
     }
@@ -162,6 +169,7 @@ mutate_prep <- function(data, dot, dot_name) {
 get_keep_vars <- function(df, dots, .by, .keep = "all") {
   if (is_quosure(.by)) {
     dots <- prep_exprs(dots, df)
+    dots <- exprs_auto_name(dots)
     .by <- character()
   }
   df_names <- names(df)
