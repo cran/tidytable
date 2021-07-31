@@ -1,20 +1,40 @@
-# "Prepare" quosures/expressions for use in a data.table "[" call
+# "Prepare" quosures/expressions for use in a "[.data.table" call
 # Allows the use of functions like n() and across.()
 # Replaces these functions with the necessary data.table translations
 # General idea follows dt_squash found here: https://github.com/tidyverse/dtplyr/blob/master/R/tidyeval.R
-prep_exprs <- function(x, data, .by = NULL) {
-  x <- lapply(x, prep_expr, data, {{ .by }})
+prep_exprs <- function(x, data, .by = NULL, j = FALSE) {
+  x <- lapply(x, prep_expr, data, {{ .by }}, j = j)
   squash(x)
 }
 
-prep_expr <- function(x, data, .by = NULL) {
+prep_expr <- function(x, data, .by = NULL, j = FALSE) {
   if (is_quosure(x)) {
     x <- get_expr(x)
   }
 
   if (is_symbol(x) || is_atomic(x) || is_null(x)) {
     x
-  } else if (is_call(x, c("n.", "n"))) {
+  } else if (is_call(x, call_fns)) {
+    prep_expr_call(x, data, {{ .by }}, j)
+  } else {
+    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }})
+    x
+  }
+}
+
+call_fns <- c(
+  "across.", "c_across.", "case_when",
+  "cur_group_rows.", "cur_group_rows", "cur_group_id.", "cur_group_id",
+  "desc.", "desc",
+  "glue",
+  "ifelse", "if_else",
+  "if_all.", "if_any.",
+  "n.", "n", "row_number.", "row_number",
+  "replace_na"
+)
+
+prep_expr_call <- function(x, data, .by = NULL, j = FALSE) {
+  if (is_call(x, c("n.", "n"))) {
     quote(.N)
   } else if (is_call(x, c("desc.", "desc"))) {
     x[[1]] <- sym("-")
@@ -59,10 +79,14 @@ prep_expr <- function(x, data, .by = NULL) {
     .cols <- get_across_cols(data, call$.cols, {{ .by }})
     dots <- call$...
     call_list <- across_calls(call$.fns, .cols, call$.names, dots)
-    prep_exprs(call_list, data, {{ .by }})
-  } else {
-    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }})
-    x
+    lapply(call_list, prep_expr, data, {{ .by }})
+  } else if (is_call(x, "glue") && j) {
+    # Needed so the user doesn't need to specify .envir, #276
+    glue_call <- match.call(glue::glue, x, expand.dots = TRUE)
+    if (is.null(glue_call$.envir)) {
+      glue_call$.envir <- quote(.SD)
+    }
+    glue_call
   }
 }
 

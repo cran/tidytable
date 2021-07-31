@@ -39,31 +39,11 @@ fill. <- function(.df, ...,
 fill..tidytable <- function(.df, ...,
                             .direction = c("down", "up", "downup", "updown"),
                             .by = NULL) {
-  .by <- enquo(.by)
-
   .direction <- arg_match(.direction)
 
-  select_cols <- tidyselect_names(.df, ...)
+  dots <- enquos(...)
 
-  with_by <- !quo_is_null(.by)
-
-  if (with_by) {
-    .df <- copy(.df)
-
-    col_order <- names(.df)
-
-    .by <- tidyselect_names(.df, !!.by)
-  } else {
-    .df <- shallow(.df)
-
-    .by <- character()
-  }
-
-  .df[, (select_cols) := lapply(.SD, fill_na, .direction), .SDcols = select_cols, by = .by]
-
-  if (with_by) setcolorder(.df, col_order)
-
-  .df[]
+  mutate.(.df, across.(c(!!!dots), fill_na, .direction), .by = {{ .by }})
 }
 
 #' @export

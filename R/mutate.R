@@ -46,13 +46,15 @@
 #' test_df %>%
 #'   mutate.(double_a = a * 2, .after = a)
 mutate. <- function(.df, ..., .by = NULL,
-                    .keep = "all", .before = NULL, .after = NULL) {
+                    .keep = c("all", "used", "unused", "none"),
+                    .before = NULL, .after = NULL) {
   UseMethod("mutate.")
 }
 
 #' @export
 mutate..tidytable <- function(.df, ..., .by = NULL,
-                              .keep = "all", .before = NULL, .after = NULL) {
+                              .keep = c("all", "used", "unused", "none"),
+                              .before = NULL, .after = NULL) {
   .df <- shallow(.df)
 
   .by <- enquo(.by)
@@ -72,7 +74,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
   if (quo_is_null(.by)) {
     for (i in seq_along(dots)) {
-      dots_i <- prep_exprs(dots[i], .df, !!.by)
+      dots_i <- prep_exprs(dots[i], .df, !!.by, j = TRUE)
       if (length(dots_i) == 0) next
       dots_i <- exprs_auto_name(dots_i)
       dots_i_names <- names(dots_i)
@@ -95,7 +97,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
       }
     }
 
-    dots <- prep_exprs(dots, .df, !!.by)
+    dots <- prep_exprs(dots, .df, !!.by, j = TRUE)
 
     .by <- tidyselect_names(.df, !!.by)
 
@@ -138,6 +140,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
     .df <- relocate.(.df, !!!syms(new_names), .before = !!.before, .after = !!.after)
   }
 
+  .keep <- arg_match(.keep)
   if (.keep != "all") {
     keep <- get_keep_vars(.df, dots, .by, .keep)
     .df <- .df[, ..keep]
@@ -148,7 +151,8 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
 #' @export
 mutate..data.frame <- function(.df, ..., .by = NULL,
-                               .keep = "all", .before = NULL, .after = NULL) {
+                               .keep = c("all", "used", "unused", "none"),
+                               .before = NULL, .after = NULL) {
   .df <- as_tidytable(.df)
   mutate.(
     .df, ..., .by = {{ .by }}, .keep = .keep,
@@ -168,7 +172,7 @@ mutate_prep <- function(data, dot, dot_name) {
 
 get_keep_vars <- function(df, dots, .by, .keep = "all") {
   if (is_quosure(.by)) {
-    dots <- prep_exprs(dots, df)
+    dots <- prep_exprs(dots, df, j = TRUE)
     dots <- exprs_auto_name(dots)
     .by <- character()
   }
