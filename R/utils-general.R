@@ -4,14 +4,15 @@ shallow <- function(x) {
   x[TRUE]
 }
 
-# Create a call to "[.data.table" (i position)
-call2_i <- function(data, i = NULL) {
-  call2("[", data, i)
+# Create a call to `[.data.table` (i position)
+call2_i <- function(.df, i = NULL) {
+  # Use enquo(.df) to clean up error messages, #305
+  call2("[", enquo(.df), i)
 }
 
-# Create a call to "[.data.table" (j position)
-call2_j <- function(data, j = NULL, .by = NULL, ...) {
-  dt_expr <- call2("[", data, , j, by = .by, ...)
+# Create a call to `[.data.table` (j position)
+call2_j <- function(.df, j = NULL, .by = NULL, ...) {
+  dt_expr <- call2("[", enquo(.df), , j, by = .by, ...)
   call2("[", dt_expr)
 }
 
@@ -20,6 +21,15 @@ call2_j <- function(data, j = NULL, .by = NULL, ...) {
 call2_dt <- function(.fn, ..., .ns = "data.table") {
   call <- call2(.fn, ..., .ns = .ns)
   quo_squash(call)
+}
+
+# Uses fast by trick for i position using .I
+# For use in slice/filter
+call2_fast_by_i <- function(.df, j, .by) {
+  dt_expr <- call2_j(.df, j, .by)
+  dt_expr <- call2("$", dt_expr, expr(V1))
+  dt_expr <- call2_i(.df, dt_expr)
+  dt_expr
 }
 
 # Extract environment from quosures to build the evaluation environment
@@ -49,13 +59,7 @@ df_name_repair <- function(.df, .name_repair = "unique") {
   .df
 }
 
-# Allows use of quosures inside data.tables
-# Squashes all quosures to expressions
-eval_quo <- function(express, data = NULL, env = caller_env()) {
-  eval_tidy(quo_squash(enquo(express)), data = data, env = env)
-}
-
-# Reduce a list of calls
+# Reduce a list of calls to a single combined call
 call_reduce <- function(x, fun) {
   Reduce(function(x, y) call2(fun, x, y), x)
 }
@@ -69,6 +73,11 @@ f_sort <- function(x, decreasing = FALSE, na.last = FALSE) {
   # )
 
   sort(x, decreasing = decreasing, na.last = na.last, method = "radix")
+}
+
+# Create a tidytable from a list
+new_tidytable <- function(x = list(), n = NULL, ...) {
+  new_data_frame(x, n, ..., class = c("tidytable", "data.table"))
 }
 
 # pmap - for internal use only
@@ -118,21 +127,15 @@ deprecate_old_across <- function(fn) {
 change_types <- function(.df, .to, .list, .ptypes_transform) {
   vars <- intersect(.to, names(.list))
   if (length(vars) > 0) {
-    calls <- vector("list", length(vars))
-    names(calls) <- vars
     if (.ptypes_transform == "ptypes") {
-      .fn <- "vec_cast"
-      for (i in seq_along(vars)) {
-        calls[[i]] <- call2(.fn, sym(vars[[i]]), .list[[i]])
-      }
+      calls <- map2.(syms(vars), .list, ~ call2("vec_cast", .x, .y))
     } else if (.ptypes_transform == "transform") {
-      for (i in seq_along(vars)) {
-        .fn <- as_function(.list[[i]])
-        calls[[i]] <- call2(.fn, sym(vars[[i]]))
-      }
+      .list <- map.(.list, as_function)
+      calls <- map2.(.list, syms(vars), call2)
     } else {
       abort("Please specify ptypes or transform")
     }
+    names(calls) <- vars
     .df <- mutate.(.df, !!!calls)
   }
   .df

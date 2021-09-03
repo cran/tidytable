@@ -1,7 +1,7 @@
-7e8b432195f75ca35ddd6e49cfb486bc *DESCRIPTION
+1e40226f4516eeb09579ac4db4bfe5cf *DESCRIPTION
 a819e4eb2ea0d730d2ed2e195f166957 *LICENSE
-31c048a21d6f5546de84edc8c54bf883 *NAMESPACE
-aec31c27605e7cab481ddcfcdcabb54d *NEWS.md
+105ac5926993e13e418468fda647fe70 *NAMESPACE
+95af08a686a0e67c2ffe495cedb79890 *NEWS.md
 6c53c4802bead67a67455437a35b0fb2 *R/across.R
 bf7373bb8e4efa321617a233a46db78e *R/arrange.R
 05e9bcca8dfe6aa92ab30b6f51f98aa1 *R/arrange_across.R
@@ -20,14 +20,15 @@ c9261bed3ac834657c54123313bce7d6 *R/cur_group.R
 594ef5e4ef7128eae54321cdb4efb16c *R/desc.R
 063e5ae12d21d2868df538181704ffbd *R/distinct.R
 0110e20626b0a2dd822ae5673984eb06 *R/drop_na.R
-69e00b9a3a3bb3c30d19623170139660 *R/dt.R
-1e4a7c61c95b672080bdaa919007c01e *R/enframe.R
+cfb8a8f00b00ea10b009a7b4f24050f2 *R/dt.R
+022e96aba417d8685bf58c0e921f0a9f *R/enframe.R
 03a213b31df599fa5d2bb8f43a5282af *R/expand.R
 51a938b302f56c663478ce0217758b82 *R/expand_grid.R
 472b3b0f2a73b4203f3040ea20580c95 *R/extract.R
 6db90acb8de1b6da8587ee367b8ec141 *R/fill.R
-b1509a35ab078835fc6d3d49b5db2a84 *R/filter.R
+1647616eeef2775c5647e4da7d5b1c6f *R/filter.R
 397fc89375275a92e8759ded2bd93917 *R/first-last.R
+694c064277310251482581d0c99daf1f *R/fread-fwrite.R
 7d4e37c5e3221c0b11fa97efb53bde27 *R/get_dummies.R
 1717ffb342b86778df521a4da288713b *R/group_split.R
 67ae7cff083d747842a0d97b57ba76fc *R/if_all-if_any.R
@@ -42,12 +43,12 @@ aade02759245e3328da334c64df73f2b *R/mutate.R
 9bd1fca709d740e39751b6f8e6a782fd *R/mutate_across.R
 7b6491c8cbf0613fadb2d332d2243807 *R/mutate_rowwise.R
 5519625053f07f954cf1573fa9ca0e6a *R/n.R
-90640c67e5fe19417d55fec726631197 *R/n_distinct.R
+d0725bd0ca14792aa830c942944324fe *R/n_distinct.R
 94e870c585aa4e3e0d0dcee4c5f1185f *R/nest.R
 e221ee495984d1538ef5999e6fd73ec7 *R/nest_by.R
 215115fac402dfeb9925ff4ac1d3a10f *R/notin.R
 f65425044832b5a0e8daa55fad625b4f *R/pivot_longer.R
-c07e71ae2347d93e964fcf7fa8e810ee *R/pivot_wider.R
+62d73ed1920ea21be0fcb7f66d2979d3 *R/pivot_wider.R
 01ccba9651a6697da869de9677bd8d8f *R/print.R
 46691bf717492bcbffd95f448729cfcd *R/pull.R
 4019dae8c00c9f39e2818b95255b0ac5 *R/relocate.R
@@ -58,7 +59,7 @@ c07e71ae2347d93e964fcf7fa8e810ee *R/pivot_wider.R
 bb4a5c167665fe65c8085f0423d46e8e *R/select.R
 0f5871a860b5faf89e205b80c3be16d2 *R/separate.R
 84eea2a7cdc57bb92f5590025cd600ae *R/separate_rows.R
-531e8a933f19ce03144e7e85f1729168 *R/slice.R
+0c7a0113b4fc8cf7d6bc4530c0ae6940 *R/slice.R
 91bb90758fd65bcb7ef82b99df2b3fdf *R/summarize.R
 2b911b4f522eb77a75a1ba4ddb9bbbb7 *R/summarize_across.R
 f997889ce65422fea8fb049979f0d30d *R/tidytable-package.R
@@ -71,7 +72,7 @@ f5f7a70ad5d7aa98b5dcc254a460637c *R/unnest.R
 3baac6c9ad83fd859c158a4ab26849e9 *R/unnest_longer.R
 78cce8c135f5307546e6e33b96d9a222 *R/unnest_wider.R
 b0c9173117940817c40f481c0f72df89 *R/utils-across.R
-0bc99ae312554e1c1690d077e1efa3bc *R/utils-general.R
+4de0512055172b3c4675ef14f44dd71a *R/utils-general.R
 65cef5e0674056f6fc07dd2b3ca85c13 *R/utils-pipe.R
 a5b5b5b4da7104d69d19b94241800124 *R/utils-prep_exprs.R
 6c85538da0c45cf623af37efa6a63afb *R/utils-stringr.R
@@ -95,7 +96,7 @@ ce6f9a4b432421a7a131465643aeb3cd *man/complete..Rd
 fb098f398e0f88aa22e1ade88922e219 *man/desc..Rd
 f8187777c54d35c1cd11b6586f018afd *man/distinct..Rd
 bcf341b404fb02420f693f06c9d7dd23 *man/drop_na..Rd
-fafec554921e6307e22c2d91f9dc3d9f *man/dt.Rd
+d436633f1957cb1c69f00890674bd544 *man/dt.Rd
 42ed36c2cf1bf471b5c8b4f5d925cae8 *man/enframe..Rd
 fc8f11d20705118ca51a455c5409fc13 *man/expand..Rd
 4d76eccef41762fce10f6e7ff382e643 *man/expand_grid..Rd
@@ -104,6 +105,7 @@ fc8f11d20705118ca51a455c5409fc13 *man/expand..Rd
 1c6f8cff2f910c34bcf28fb53e3bc496 *man/fill..Rd
 9ff2193e5442b9af534a4d1deb487e4b *man/filter..Rd
 be19fac4e88bd7e9d3f39cae128f8a0f *man/first..Rd
+3b59e4e2e6a2e87960543945fdc73468 *man/fread..Rd
 8ff8fb9a32d4f1732ccb48e54312a4d1 *man/get_dummies..Rd
 148d1fdb36147e8b66664533ab4189a3 *man/grapes-notin-grapes.Rd
 723da779abf3add3fce20b21c021b95b *man/group_split..Rd
@@ -168,6 +170,7 @@ a28ccfaf30def7c4f792159cf7b15975 *tests/testthat/test-dt.R
 f46398c045e39c38207b4c7566ac1830 *tests/testthat/test-fill.R
 7ca9397feea61e3b2788653958ac1e36 *tests/testthat/test-filter.R
 d234a7b4dc906f6cd60e882561c4ac95 *tests/testthat/test-first-last.R
+4b0a560341fd829cd33c0406d02396c8 *tests/testthat/test-fread.R
 60311a2043ede657530e54692d6af897 *tests/testthat/test-get_dummies.R
 4d5f65fdd482bf6e28d211099c9ecfad *tests/testthat/test-group_split.R
 d7a0a519c8d37ea99313807f5995685d *tests/testthat/test-if_all-if_any.R
@@ -189,7 +192,7 @@ a099e0fb0301157c64a830f7a6ff00c5 *tests/testthat/test-purrr.R
 6f281fde6773921a68662badb8842b91 *tests/testthat/test-select.R
 2ef8672d18caaa32588ec031f5d0c15a *tests/testthat/test-separate.R
 6b2d78a3e1938bdaa27d5985e3472ea7 *tests/testthat/test-separate_rows.R
-e2b96a48e3f9d90f129b0cfd422015ae *tests/testthat/test-slice.R
+b968f1a69343c8c657b2d76956a076fe *tests/testthat/test-slice.R
 a0e0ddf1400578b5c4281ec321548644 *tests/testthat/test-summarize.R
 104ece5babf397f2e0721a2294e1c1ee *tests/testthat/test-tidytable.R
 62999879984c40bb255849e3fa238d00 *tests/testthat/test-top_n.R
@@ -197,6 +200,6 @@ a0e0ddf1400578b5c4281ec321548644 *tests/testthat/test-summarize.R
 797f3961311b87482666e005de1a0280 *tests/testthat/test-uncount.R
 671e60ed41788499f03561c4d838ace4 *tests/testthat/test-unite.R
 251f7a52321f8f96dff66f29010e140f *tests/testthat/test-unnest.R
-1a9f662bf61ee67d045c0d0827345b32 *tests/testthat/test-unnest_longer.R
+8e1a7b08f741e6b8043885cb321ac0e1 *tests/testthat/test-unnest_longer.R
 97d4c2eb77e80d5c1d977bec17fc8a1c *tests/testthat/test-unnest_wider.R
 d38ce0235c263071f33ec7e4e0700825 *tests/testthat/test-vctrs-tidytable.R
