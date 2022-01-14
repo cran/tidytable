@@ -17,19 +17,19 @@
 #' @export
 #' @md
 #' @examples
-#' test_df <- data.table(
+#' df <- data.table(
 #'   a = 1:3,
 #'   b = 4:6,
-#'   c = c("a","a","b"),
-#'   d = c("a","a","b")
+#'   c = c("a", "a", "b"),
+#'   d = c("a", "a", "b")
 #' )
 #'
-#' test_df %>%
+#' df %>%
 #'   summarize.(avg_a = mean(a),
 #'              max_b = max(b),
 #'              .by = c)
 #'
-#' test_df %>%
+#' df %>%
 #'   summarize.(avg_a = mean(a),
 #'              .by = c(c, d))
 summarize. <- function(.df, ..., .by = NULL, .sort = FALSE) {
@@ -42,7 +42,7 @@ summarize..tidytable <- function(.df, ..., .by = NULL, .sort = FALSE) {
 
   dt_env <- get_dt_env(dots)
 
-  dots <- prep_exprs(dots, .df, {{ .by }})
+  dots <- prep_exprs(dots, .df, {{ .by }}, dt_env = dt_env)
 
   .by <- tidyselect_names(.df, {{ .by }})
 
@@ -50,7 +50,7 @@ summarize..tidytable <- function(.df, ..., .by = NULL, .sort = FALSE) {
 
   dt_expr <- call2_j(.df, j, .by)
 
-  .df <- eval_tidy(dt_expr, env = dt_env)
+  .df <- eval_tidy(dt_expr, .df, dt_env)
 
   if (.sort) {
     .df <- arrange.(.df, !!!syms(.by))

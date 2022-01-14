@@ -11,16 +11,16 @@
 #' @export
 #'
 #' @examples
-#' test_df <- data.table(
+#' df <- data.table(
 #'   a = 1:3,
 #'   b = 4:6,
 #'   c = c("a", "a", "b")
 #' )
 #'
-#' test_df %>%
+#' df %>%
 #'   arrange.(c, -a)
 #'
-#' test_df %>%
+#' df %>%
 #'   arrange.(c, desc(a))
 arrange. <- function(.df, ...) {
   UseMethod("arrange.")
@@ -29,8 +29,12 @@ arrange. <- function(.df, ...) {
 #' @export
 arrange..tidytable <- function(.df, ...) {
   dots <- enquos(...)
+
   if (length(dots) == 0) return(.df)
-  dots <- prep_exprs(dots, .df)
+
+  dt_env <- get_dt_env(dots)
+
+  dots <- prep_exprs(dots, .df, dt_env = dt_env)
 
   i <- expr(order(!!!dots))
 

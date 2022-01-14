@@ -19,14 +19,14 @@
 #' @export
 #'
 #' @examples
-#' test_df <- data.table(x = c("a", "a.b", "a.b", NA))
+#' df <- data.table(x = c("a", "a.b", "a.b", NA))
 #'
 #' # "sep" can be automatically detected (slower)
-#' test_df %>%
+#' df %>%
 #'   separate.(x, into = c("c1", "c2"))
 #'
 #' # Faster if "sep" is provided
-#' test_df %>%
+#' df %>%
 #'   separate.(x, into = c("c1", "c2"), sep = ".")
 separate. <- function(.df, col, into,
                       sep = "[^[:alnum:]]+",
@@ -56,6 +56,8 @@ separate..tidytable <- function(.df, col, into,
   }
 
   col <- enquo(col)
+
+  col <- tidyselect_syms(.df, !!col)[[1]]
 
   not_na_into <- !is.na(into)
 

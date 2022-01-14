@@ -25,25 +25,25 @@
 #' @export
 #'
 #' @examples
-#' test_df <- data.table(
+#' df <- data.table(
 #'   a = 1:3,
 #'   b = 4:6,
 #'   c = c("a", "a", "b")
 #' )
 #'
-#' test_df %>%
+#' df %>%
 #'   mutate.(double_a = a * 2,
 #'           a_plus_b = a + b)
 #'
-#' test_df %>%
+#' df %>%
 #'   mutate.(double_a = a * 2,
 #'           avg_a = mean(a),
 #'           .by = c)
 #'
-#' test_df %>%
+#' df %>%
 #'   mutate.(double_a = a * 2, .keep = "used")
 #'
-#' test_df %>%
+#' df %>%
 #'   mutate.(double_a = a * 2, .after = a)
 mutate. <- function(.df, ..., .by = NULL,
                     .keep = c("all", "used", "unused", "none"),
@@ -62,6 +62,8 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
   dots <- enquos(...)
   if (length(dots) == 0) return(.df)
 
+  named_bool <- have_name(dots)
+
   dt_env <- get_dt_env(dots)
 
   .before <- enquo(.before)
@@ -74,7 +76,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
   if (quo_is_null(.by)) {
     for (i in seq_along(dots)) {
-      dots_i <- prep_exprs(dots[i], .df, !!.by, j = TRUE)
+      dots_i <- prep_exprs(dots[i], .df, !!.by, j = TRUE, dt_env, named_bool[[i]])
       if (length(dots_i) == 0) next
       dots_i <- exprs_auto_name(dots_i)
       dots_i_names <- names(dots_i)
@@ -85,7 +87,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
       dt_expr <- call2_j(.df, j)
 
-      .df <- eval_tidy(dt_expr, env = dt_env)
+      .df <- eval_tidy(dt_expr, .df, dt_env)
     }
   } else {
     if (length(dots) > 1) {
@@ -97,7 +99,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
       }
     }
 
-    dots <- prep_exprs(dots, .df, !!.by, j = TRUE)
+    dots <- prep_exprs(dots, .df, !!.by, j = TRUE, dt_env)
 
     .by <- tidyselect_names(.df, !!.by)
 
@@ -105,32 +107,36 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
     if (needs_copy) .df <- copy(.df)
 
     # Check for NULL inputs so columns can be deleted
+    # Only delete if the NULL is the last call
     null_bool <- map_lgl.(dots, is_null)
-    any_null <- any(null_bool)
+    is_last <- !duplicated(names(dots), fromLast = TRUE)
+    needs_removal <- null_bool & is_last
+    any_null <- any(needs_removal)
 
     if (any_null) {
-      null_dots <- dots[null_bool]
+      null_dots <- dots[needs_removal]
 
-      dots <- dots[!null_bool]
+      dots <- dots[!needs_removal]
     }
 
     if (length(dots) > 0) {
       dots <- exprs_auto_name(dots)
       dots_names <- names(dots)
-      assign <- map2.(syms(dots_names), dots, ~ call2("<-", .x, .y))
+      assign <- map2.(syms(dots_names), dots, ~ call2("=", .x, .y))
+      dots_names <- unique(dots_names)
       output <- call2("list", !!!syms(dots_names))
       expr <- call2("{", !!!assign, output)
       j <- call2(":=", call2("c", !!!dots_names), expr)
       dt_expr <- call2_j(.df, j, .by)
 
-      .df <- eval_tidy(dt_expr, env = dt_env)
+      .df <- eval_tidy(dt_expr, .df, dt_env)
     }
 
     if (any_null) {
       j <- call2(":=", !!!null_dots)
       dt_expr <- call2_j(.df, j)
 
-      .df <- eval_tidy(dt_expr, env = dt_env)
+      .df <- eval_tidy(dt_expr, .df, dt_env)
     }
   }
 

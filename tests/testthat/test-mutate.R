@@ -2,8 +2,14 @@ test_that("can remove variables with NULL", {
   df <- data.table(x = rep(1, 3), y = rep(2, 3))
   tidytable_df <- mutate.(df, y = NULL)
 
-  # check that .by with NULL works
-  tidytable2_df <- mutate.(df, x_plus_y = x + y, y = NULL, .by = x)
+  # Check that .by with NULL works
+  # Only deletes if the the NULL is in the last position
+  tidytable2_df <- df %>%
+    mutate.(x = NULL,
+            x = rep(1, 3),
+            x_plus_y = x + y,
+            y = NULL,
+            .by = x)
 
   df_check <- tidytable(x = rep(1, 3), x_plus_y = rep(3, 3))
 
@@ -337,6 +343,48 @@ test_that("Can use glue, #276", {
   out <- mutate.(test_df, new = glue("{a}_{b}"))
   expect_named(out, c("a", "b", "new"))
   expect_equal(as.character(out$new), c("a_a", "b_b", "c_c"))
+})
+
+test_that("Can use str_glue, #378", {
+  test_df <- data.table(a = letters[1:3], b = letters[1:3])
+  out <- mutate.(test_df, new = str_glue("{a}_{b}"))
+  expect_named(out, c("a", "b", "new"))
+  expect_equal(as.character(out$new), c("a_a", "b_b", "c_c"))
+  out2 <- mutate.(test_df, new = paste0(str_glue("{a}_{b}_check")))
+  expect_equal(as.character(out2$new), c("a_a_check", "b_b_check", "c_c_check"))
+})
+
+test_that("Can assign to the same column multiple times when .by = character(0), #332", {
+  test_df <- tidytable(x = 1, y = 2)
+  out <- mutate.(test_df, x = x + 10, x = x, .by = character(0))
+  expect_named(out, c("x", "y"))
+  expect_equal(out$x, 11)
+})
+
+test_that("can use .data and .env", {
+  df <- data.table(x = 1:3, y = 1:3)
+
+  x <- 1
+
+  col <- "x"
+
+  df <- df %>%
+    mutate.(x_x = .data[[col]] + .env$x)
+
+  expect_named(df, c("x", "y", "x_x"))
+  expect_equal(df$x_x, 2:4)
+})
+
+test_that("can use .data and .env with .by", {
+  df <- data.table(x = 1:3, y = c("a", "a", "b"))
+
+  x <- 1
+
+  df <- df %>%
+    mutate.(new = mean(.data$x) + .env$x, .by = y)
+
+  expect_named(df, c("x", "y", "new"))
+  expect_equal(df$new, c(2.5, 2.5, 4))
 })
 
 

@@ -10,16 +10,16 @@
 #' @export
 #'
 #' @examples
-#' test_df <- tidytable(
+#' df <- tidytable(
 #'   a = 1:3,
 #'   b = 4:6,
 #'   c = c("a", "a", "b")
 #' )
 #'
-#' test_df %>%
+#' df %>%
 #'   filter.(a >= 2, b >= 4)
 #'
-#' test_df %>%
+#' df %>%
 #'   filter.(b <= mean(b), .by = c)
 filter. <- function(.df, ..., .by = NULL) {
   UseMethod("filter.")
@@ -36,14 +36,14 @@ filter..tidytable <- function(.df, ..., .by = NULL) {
 
   dt_env <- get_dt_env(dots)
 
-  dots <- prep_exprs(dots, .df, !!.by)
+  dots <- prep_exprs(dots, .df, !!.by, dt_env = dt_env)
 
   i <- call_reduce(dots, "&")
 
   if (quo_is_null(.by)) {
     dt_expr <- call2_i(.df, i)
 
-    .df <- eval_tidy(dt_expr, env = dt_env)
+    .df <- eval_tidy(dt_expr, data = .df, env = dt_env)
   } else {
     .by <- tidyselect_names(.df, !!.by)
 
@@ -51,7 +51,7 @@ filter..tidytable <- function(.df, ..., .by = NULL) {
 
     dt_expr <- call2_fast_by_i(.df, j, .by)
 
-    .df <- eval_tidy(dt_expr, env = dt_env)
+    .df <- eval_tidy(dt_expr, data = .df, env = dt_env)
   }
 
   .df
