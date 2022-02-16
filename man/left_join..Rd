@@ -2,20 +2,20 @@
 % Please edit documentation in R/join.R
 \name{left_join.}
 \alias{left_join.}
-\alias{inner_join.}
 \alias{right_join.}
+\alias{inner_join.}
 \alias{full_join.}
 \alias{anti_join.}
 \alias{semi_join.}
 \title{Join two data.tables together}
 \usage{
-left_join.(x, y, by = NULL)
+left_join.(x, y, by = NULL, suffix = c(".x", ".y"), ..., keep = FALSE)
 
-inner_join.(x, y, by = NULL)
+right_join.(x, y, by = NULL, suffix = c(".x", ".y"), ..., keep = FALSE)
 
-right_join.(x, y, by = NULL)
+inner_join.(x, y, by = NULL, suffix = c(".x", ".y"), ..., keep = FALSE)
 
-full_join.(x, y, by = NULL, suffix = c(".x", ".y"))
+full_join.(x, y, by = NULL, suffix = c(".x", ".y"), ..., keep = FALSE)
 
 anti_join.(x, y, by = NULL)
 
@@ -29,6 +29,10 @@ semi_join.(x, y, by = NULL)
 \item{by}{A character vector of variables to join by. If NULL, the default, the join will do a natural join, using all variables with common names across the two tables.}
 
 \item{suffix}{Append created for duplicated column names when using \code{full_join.()}}
+
+\item{...}{Other parameters passed on to methods}
+
+\item{keep}{Should the join keys from both \code{x} and \code{y} be preserved in the output?}
 }
 \value{
 A data.table

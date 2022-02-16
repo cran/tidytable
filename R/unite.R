@@ -34,44 +34,50 @@
 #'
 #' df %>%
 #'   unite.()
-unite. <- function(.df, col = "new_col", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
+unite. <- function(.df, col = ".united", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
   UseMethod("unite.")
 }
 
 #' @export
-unite..tidytable <- function(.df, col = "new_col", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
+unite..tidytable <- function(.df, col = ".united", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
   vec_assert(sep, character(), 1)
   vec_assert(remove, logical(), 1)
   vec_assert(na.rm, logical(), 1)
 
-  dots <- enquos(...)
+  col <- as_name(enquo(col))
 
+  dots <- enquos(...)
   if (length(dots) == 0) {
     unite_cols <- names(.df)
   } else {
     unite_cols <- tidyselect_names(.df, ...)
   }
 
-  if (na.rm) {
+  if (is_true(na.rm)) {
     cols <- unname(map.(.df[, ..unite_cols], as.character))
     rows <- transpose(cols)
 
     .united <- map_chr.(rows, ~ paste0(.x[!is.na(.x)], collapse = sep))
 
-    .df <- mutate.(.df, !!col := .united)
+    .df <- mutate.(.df, !!col := .env$.united)
   } else {
     .df <- mutate.(.df, !!col := paste(!!!syms(unite_cols), sep = sep))
   }
 
-  if (remove) .df <- .df[, -..unite_cols]
+  .df <- relocate.(.df, !!col, .before = !!sym(unite_cols[[1]]))
+
+  if (is_true(remove)) {
+    drop_cols <- setdiff(unite_cols, col)
+    .df <- .df[, -..drop_cols]
+  }
 
   .df
 }
 
 #' @export
-unite..data.frame <- function(.df, col = "new_col", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
+unite..data.frame <- function(.df, col = ".united", ..., sep = "_", remove = TRUE, na.rm = FALSE) {
   .df <- as_tidytable(.df)
-  unite.(.df, col = col, ..., sep = sep, remove = remove, na.rm = na.rm)
+  unite.(.df, {{ col }}, ..., sep = sep, remove = remove, na.rm = na.rm)
 }
 
-globalVariables("..unite_cols")
+globalVariables(c("..drop_cols", "..unite_cols"))

@@ -2,12 +2,12 @@
 # Allows the use of functions like n() and across.()
 # Replaces these functions with the necessary data.table translations
 # General idea follows dt_squash found here: https://github.com/tidyverse/dtplyr/blob/master/R/tidyeval.R
-prep_exprs <- function(x, data, .by = NULL, j = FALSE, dt_env, named = FALSE) {
-  x <- lapply(x, prep_expr, data, {{ .by }}, j = j, dt_env = dt_env, named)
+prep_exprs <- function(x, data, .by = NULL, j = FALSE, dt_env, is_top_across = TRUE) {
+  x <- lapply(x, prep_expr, data, {{ .by }}, j = j, dt_env = dt_env, is_top_across)
   squash(x)
 }
 
-prep_expr <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
+prep_expr <- function(x, data, .by = NULL, j = FALSE, dt_env, is_top_across) {
   if (is_quosure(x)) {
     x <- get_expr(x)
   }
@@ -15,9 +15,9 @@ prep_expr <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
   if (is_symbol(x) || is_atomic(x) || is_null(x)) {
     x
   } else if (is_call(x, call_fns)) {
-    prep_expr_call(x, data, {{ .by }}, j, dt_env, named)
+    prep_expr_call(x, data, {{ .by }}, j, dt_env, is_top_across)
   } else {
-    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j = j, dt_env = dt_env, named)
+    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j = j, dt_env = dt_env, is_top_across)
     x
   }
 }
@@ -36,7 +36,7 @@ call_fns <- c(
   "str_glue"
 )
 
-prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
+prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, is_top_across) {
   if (is_call(x, c("n.", "n"))) {
     quote(.N)
   } else if (is_call(x, c("desc.", "desc"))) {
@@ -49,28 +49,28 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
     quote(.GRP)
   } else if (is_call(x, c("ifelse", "if_else"))) {
     if (is_call(x, "if_else")) {
-      x <- match.call(internal_if_else, x)
+      x <- call_match(x, internal_if_else)
     } else {
-      x <- match.call(base::ifelse, x)
+      x <- call_match(x, base::ifelse)
     }
     x <- unname(x)
     x[[1]] <- quote(tidytable::ifelse.)
-    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, named)
+    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, is_top_across)
     x
   } else if (is_call(x, "case_when", ns = "")) {
     x[[1]] <- quote(tidytable::case_when.)
-    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, named)
+    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, is_top_across)
     x
   } else if (is_call(x, "replace_na")) {
     x[[1]] <- quote(tidytable::replace_na.)
     x
   } else if (is_call(x, "c_across.")) {
-    call <- match.call(tidytable::c_across., x, expand.dots = FALSE)
+    call <- call_match(x, tidytable::c_across.)
     cols <- get_across_cols(data, call$cols, {{ .by }})
     cols <- syms(cols)
     call2("vec_c", !!!cols, .ns = "vctrs")
   } else if (is_call(x, c("if_all.", "if_any."))) {
-    call <- match.call(tidytable::if_all., x, expand.dots = FALSE)
+    call <- call_match(x, tidytable::if_all.)
     if (is.null(call$.fns)) return(TRUE)
     .cols <- get_across_cols(data, call$.cols, {{ .by }})
     call_list <- map.(.cols, ~ fn_to_expr(call$.fns, .x))
@@ -78,12 +78,12 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
     filter_expr <- call_reduce(call_list, reduce_fn)
     prep_expr(filter_expr, data, {{ .by }})
   } else if (is_call(x, "across.")) {
-    call <- match.call(tidytable::across., x, expand.dots = FALSE)
+    call <- call_match(x, tidytable::across., dots_expand = FALSE)
     .cols <- get_across_cols(data, call$.cols, {{ .by }})
     dots <- call$...
     call_list <- across_calls(call$.fns, .cols, call$.names, dots)
     out <- lapply(call_list, prep_expr, data, {{ .by }})
-    if (named) {
+    if (!is_top_across) {
       out <- call2("data_frame", !!!out, .ns = "vctrs")
     }
     out
@@ -92,7 +92,7 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
       x[[1]] <- quote(glue::glue)
     }
     # Needed so the user doesn't need to specify .envir, #276
-    glue_call <- match.call(glue::glue, x, expand.dots = TRUE)
+    glue_call <- call_match(x, glue::glue)
     if (is.null(glue_call$.envir)) {
       glue_call$.envir <- quote(.SD)
     }
@@ -108,7 +108,7 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env, named) {
     var
   } else {
     # Catches case when "$" or "[[" is used but is not using .data pronoun
-    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, named)
+    x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, is_top_across)
     x
   }
 }
