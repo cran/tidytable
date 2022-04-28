@@ -72,7 +72,8 @@ unnest..tidytable <- function(.df,
   }
 
   if (keep_empty) {
-    .df <- mutate_lapply(.df, as.character(dots), keep_empty_prep)
+    dots_chr <- as.character(dots)
+    .df <- mutate.(.df, across.(all_of(dots_chr), keep_empty_prep))
   }
 
   unnest_data <- map.(dots, ~ unnest_col(.df, .x, names_sep))
@@ -116,9 +117,9 @@ unnest..data.frame <- function(.df,
 unnest_col <- function(.df, col = NULL, names_sep = NULL) {
   .l <- pull.(.df, !!col)
 
-  null_bool <- map_lgl.(.l, is.null)
+  .l <- list_drop_empty(.l)
 
-  .check_data <- .l[!null_bool][[1]]
+  .check_data <- .l[[1]]
   is_vec <- is.atomic(.check_data) && !is.matrix(.check_data)
 
   if (is_vec) {
@@ -147,7 +148,7 @@ keep_empty_prep <- function(.l) {
     .replace <- NA
   } else {
     null_df <- vec_slice(.check_data, 1)
-    vec_slice(null_df, 1) <- NA
+    null_df <- vec_assign(null_df, 1, NA)
 
     .replace <- list(null_df)
   }

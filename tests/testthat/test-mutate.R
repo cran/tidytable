@@ -118,12 +118,15 @@ test_that("column order is correct", {
 
 test_that("can take data.frame input", {
   df <- data.frame(x = 1:3, y = 1:3)
-  df <- df %>%
+  out <- df %>%
     mutate.(double_x = x * 2,
-            double_y = y * 2)
+            y = 1)
 
-  expect_named(df, c("x", "y", "double_x", "double_y"))
-  expect_equal(df$x * 2, df$double_x)
+  expect_named(out, c("x", "y", "double_x"))
+  expect_equal(out$double_x, c(2, 4, 6))
+  expect_equal(out$y, c(1, 1, 1))
+  # Doesn't modify-by-reference
+  expect_equal(df$y, 1:3)
 })
 
 test_that("can use .by", {
@@ -387,4 +390,12 @@ test_that("can use .data and .env with .by", {
   expect_equal(df$new, c(2.5, 2.5, 4))
 })
 
+test_that("can use anonymous functions with map, #402", {
+  df <- tidytable(x = list(1, 1, 1), y = list(2, 2, 2))
 
+  out <- df %>%
+    mutate.(z = map2_dbl.(x, y, function(.x, .y) .x + .y))
+
+  expect_named(out, c("x", "y", "z"))
+  expect_equal(out$z, c(3, 3, 3))
+})

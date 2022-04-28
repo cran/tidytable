@@ -59,73 +59,56 @@ get_dummies..tidytable <- function(.df,
                                    prefix_sep = "_",
                                    drop_first = FALSE,
                                    dummify_na = TRUE) {
-  .df <- shallow(.df)
-
-  vec_assert(prefix, logical(), 1)
-  vec_assert(prefix_sep, character(), 1)
-  vec_assert(drop_first, logical(), 1)
-  vec_assert(dummify_na, logical(), 1)
-
   cols <- tidyselect_syms(.df, {{ cols }})
-
-  original_cols <- copy(names(.df))
-
-  ordered_cols <- character()
 
   for (col in cols) {
     col_name <- as.character(col)
 
+    unique_vals <- vec_unique(as.character(.df[[col_name]]))
+
     if (drop_first) {
-      unique_vals <- vec_unique(as.character(.df[[col_name]]))[-1]
-    } else {
-      unique_vals <- vec_unique(as.character(.df[[col_name]]))
+      unique_vals <- unique_vals[-1]
     }
 
-    # If NAs need dummies, convert to character string "NA" for col name creation
-    if (dummify_na) {
-      unique_vals <- unique_vals %|% "NA"
-    } else {
-      unique_vals <- unique_vals[!is.na(unique_vals)]
+    unique_vals <- f_sort(unique_vals)
+
+    # Due to above f_sort NA will be the first value if it exists
+    any_na <- is.na(unique_vals[1])
+
+    if (any_na) {
+      unique_vals <- unique_vals[-1]
     }
 
     if (prefix) {
-      new_names <- paste(col_name, unique_vals, sep = prefix_sep)
+      not_na_cols <- paste(col_name, unique_vals, sep = prefix_sep)
+      na_col <- paste(col_name, "NA", sep = prefix_sep)
     } else {
-      new_names <- unique_vals
+      not_na_cols <- unique_vals
+      na_col <- "NA"
     }
 
-    # Remove "NA" from unique vals after new_names columns are made
-    not_na_cols <- new_names[unique_vals != "NA"]
-    unique_vals <- unique_vals[unique_vals != "NA"]
-
-    dummy_calls <- vector("list", length(unique_vals))
-    names(dummy_calls) <- not_na_cols
-    for (i in seq_along(unique_vals)) {
-      dummy_calls[[i]] <- expr(ifelse.(!!col == !!unique_vals[i], 1L, 0L, 0L))
+    if (any_na) {
+      not_na <- !is.na(.df[[col_name]])
+      .df <- dt_j(
+        .df,
+        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col & ..not_na))
+      )
+    } else {
+      .df <- dt_j(
+        .df,
+        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col))
+      )
     }
 
-    .df <- mutate.(.df, !!!dummy_calls)
-
-    # Since the prior step doesn't recognize NA as a character,
-    # an extra step is needed to flag NA vals
-    if (dummify_na) {
-      na_col <- new_names[new_names %notin% not_na_cols]
-      if (length(na_col) > 0) {
-        .df <- mutate.(.df, !!na_col := as.integer(is.na(!!col)))
-      }
+    if (dummify_na && any_na) {
+      .df <- dt_j(.df, (na_col) := as.integer(!not_na))
     }
-
-    new_names <- f_sort(new_names)
-
-    ordered_cols <- c(ordered_cols, new_names)
   }
-
-  final_order <- c(original_cols, ordered_cols)
-
-  setcolorder(.df, final_order)
 
   .df
 }
+
+globalVariables("..not_na")
 
 #' @export
 get_dummies..data.frame <- function(.df,

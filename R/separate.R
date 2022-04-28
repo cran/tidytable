@@ -42,12 +42,10 @@ separate..tidytable <- function(.df, col, into,
                                 remove = TRUE,
                                 convert = FALSE,
                                 ...) {
-  .df <- shallow(.df)
-
-  vec_assert(into, character())
-
   if (missing(col)) abort("col is missing and must be supplied")
   if (missing(into)) abort("into is missing and must be supplied")
+
+  vec_assert(into, character())
 
   if (nchar(sep) == 1) {
     fixed <- TRUE
@@ -70,13 +68,11 @@ separate..tidytable <- function(.df, col, into,
     .ns = "data.table"
   ))
 
-  j <- call2(":=", into, t_str_split)
+  .df <- dt_j(.df, (into) := !!t_str_split)
 
-  call <- call2_j(.df, j)
-
-  .df <- eval_tidy(call)
-
-  if (remove) .df <- mutate.(.df, !!col := NULL)
+  if (remove) {
+    .df <- dt_j(.df, !!col := NULL)
+  }
 
   .df[]
 }

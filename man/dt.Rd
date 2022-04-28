@@ -12,12 +12,14 @@ dt(.df, ...)
 \item{...}{Arguments passed to data.table call. See ?data.table::\verb{[.data.table}}
 }
 \description{
-Pipeable data.table call
+Pipeable data.table call.
+
+Has \emph{experimental} support for tidy evaluation.
 
 Note: This function does not use data.table's modify-by-reference
 }
 \examples{
-df <- data.table(
+df <- tidytable(
   x = 1:3,
   y = 4:6,
   z = c("a", "a", "b")
@@ -26,4 +28,13 @@ df <- data.table(
 df \%>\%
   dt(, double_x := x * 2) \%>\%
   dt(order(-double_x))
+
+# Experimental support for tidy evaluation
+add_one <- function(data, col) {
+  data \%>\%
+    dt(, {{ col }} := {{ col }} + 1)
+}
+
+df \%>\%
+  add_one(x)
 }
