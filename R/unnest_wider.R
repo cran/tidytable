@@ -37,7 +37,7 @@ unnest_wider..tidytable <- function(.df, col, names_sep = NULL,
 
   .l <- pull.(.df, !!.col)
 
-  if (!is.atomic(.l[[1]])) {
+  if (!is_simple_vector(.l[[1]])) {
     abort("Only vectors are currently supported")
   }
 
@@ -53,7 +53,7 @@ unnest_wider..tidytable <- function(.df, col, names_sep = NULL,
     out_names <- names(out)
     new_names <- paste(as_name(.col), out_names, sep = names_sep)
 
-    out <- setnames.(out, out_names, new_names)
+    out <- df_set_names(out, new_names, out_names)
   } else {
     out <- df_name_repair(out, .name_repair = "universal")
   }

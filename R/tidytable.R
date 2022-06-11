@@ -10,19 +10,17 @@
 #'
 #' @examples
 #' tidytable(x = 1:3, y = c("a", "a", "b"))
-tidytable <- function(..., .name_repair = c("check_unique", "unique", "universal", "minimal")) {
-  dots <- dots_list(..., .named = TRUE)
-
-  if (length(dots) == 0) {
-    df <- new_tidytable()
+tidytable <- function(..., .name_repair = "unique") {
+  if (missing(...)) {
+    dots <- list()
   } else {
-    dots <- map.(dots, ~ if (is_quosure(.x)) eval_tidy(.x) else .x)
-    dots <- dots[!map_lgl.(dots, is.null)]
-
-    dots <- vec_recycle_common(!!!dots)
-
-    df <- df_name_repair(new_tidytable(dots), .name_repair = .name_repair)
+    dots <- dots_list(...)
+    dots <- map.(dots, eval_tidy)
+    if (any(have_name(dots) & map_lgl.(dots, is.data.frame))) {
+      abort("data frame inputs must be unnamed")
+    }
+    dots <- df_list(!!!dots, .name_repair = .name_repair)
   }
 
-  df
+  new_tidytable(dots)
 }

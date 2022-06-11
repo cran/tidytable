@@ -34,15 +34,12 @@ semi_join.(x, y, by = NULL)
 
 \item{keep}{Should the join keys from both \code{x} and \code{y} be preserved in the output?}
 }
-\value{
-A data.table
-}
 \description{
 Join two data.tables together
 }
 \examples{
-df1 <- data.table(x = c("a", "a", "b"), y = 1:3)
-df2 <- data.table(x = c("a", "b"), z = 1:2)
+df1 <- data.table(x = c("a", "a", "b", "c"), y = 1:4)
+df2 <- data.table(x = c("a", "b"), z = 5:6)
 
 df1 \%>\% left_join.(df2)
 df1 \%>\% inner_join.(df2)

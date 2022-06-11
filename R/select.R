@@ -41,13 +41,13 @@ select. <- function(.df, ...) {
 
 #' @export
 select..tidytable <- function(.df, ...) {
-  cols <- tidyselect_locs(.df, ...)
+  locs <- tidyselect_locs(.df, ...)
 
-  .df <- .df[, ..cols]
+  out <- new_data_frame(.df)[locs]
 
-  .df <- set_names(.df, names(cols))
+  out <- df_set_names(out, names(locs))
 
-  .df
+  tidytable_restore(out, .df)
 }
 
 #' @export
@@ -55,5 +55,3 @@ select..data.frame <- function(.df, ...) {
   .df <- as_tidytable(.df)
   select.(.df, ...)
 }
-
-globalVariables("..cols")

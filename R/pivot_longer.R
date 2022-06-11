@@ -77,10 +77,10 @@ pivot_longer..tidytable <- function(.df,
 
   if (length(measure_vars) == 0) abort("At least one column must be supplied to cols")
 
-  id_vars <- names[!names %in% measure_vars]
+  id_vars <- names[!names %f_in% measure_vars]
 
   multiple_names_to <- length(names_to) > 1
-  uses_dot_value <- ".value" %in% names_to
+  uses_dot_value <- ".value" %f_in% names_to
   na_in_names_to <- is.na(names_to)
 
   variable_name <- "variable"
@@ -102,7 +102,7 @@ pivot_longer..tidytable <- function(.df,
       names_glue <- paste0("{", names_to, "}", collapse = "___")
       new_names <- glue_data(names_to_setup, names_glue)
 
-      .df <- setnames.(.df, measure_vars, new_names)
+      .df <- df_set_names(.df, new_names, measure_vars)
 
       measure_vars <- new_names
     } else {
@@ -202,12 +202,9 @@ pivot_longer..tidytable <- function(.df,
   out <- change_types(out, values_to, values_transform, "transform")
 
   # data.table::melt() drops NAs using "&" logic, not "|"
-  # Example in tidytable #186 shows why this is necessary
+  # See issue #186
   if (values_drop_na && multiple_names_to) {
-    filter_calls <- map.(syms(values_to), ~ call2("!", call2("is.na", .x)))
-    filter_expr <- call_reduce(filter_calls, "|")
-
-    out <- filter.(out, !!filter_expr)
+    out <- filter.(out, if_any.(any_of(values_to), ~ !is.na(.x)))
   }
 
   as_tidytable(out)

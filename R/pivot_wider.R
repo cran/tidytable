@@ -79,7 +79,7 @@ pivot_wider..tidytable <- function(.df,
 
   if (quo_is_null(id_cols)) {
     data_names <- names(.df)
-    id_cols <- data_names[!data_names %in% c(names_from, values_from)]
+    id_cols <- data_names[!data_names %f_in% c(names_from, values_from)]
   } else {
     id_cols <- tidyselect_names(.df, !!id_cols)
   }
@@ -102,7 +102,7 @@ pivot_wider..tidytable <- function(.df,
   } else if (!is.null(names_glue)) {
     .df <- mutate.(.df, .names_from = glue(.env$names_glue))
     .df <- relocate.(.df, .names_from, .before = !!sym(names_from[[1]]))
-    .df <- .df[, -..names_from]
+    .df <- dt_j(.df, (names_from) := NULL)
 
     names_from <- ".names_from"
   }
@@ -139,7 +139,7 @@ pivot_wider..tidytable <- function(.df,
   if (uses_dot_value) {
     new_vars <- setdiff(names(.df), id_cols)
 
-    .df <- setnames.(.df, new_vars, glue_vars)
+    .df <- df_set_names(.df, glue_vars, new_vars)
   }
 
   .df <- df_name_repair(.df, .name_repair = names_repair)

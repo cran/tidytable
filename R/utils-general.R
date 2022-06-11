@@ -1,43 +1,4 @@
-# Creates a shallow copy
-# Can add new columns or rename columns without modify-by-reference
-shallow <- function(x) {
-  x[TRUE]
-}
-
-# Copy columns that are being overwritten
-# If columns are all new uses shallow copy
-# Faster than running `copy()` on an entire dataset
-fast_copy <- function(x, new_cols = character()) {
-  if (length(new_cols) == 0) return(shallow(x))
-
-  x_names <- copy(names(x))
-  needs_copy <- new_cols %chin% x_names
-  if (any(needs_copy)) {
-    copy_cols <- new_cols[needs_copy]
-  } else {
-    copy_cols <- character()
-  }
-
-  if (length(copy_cols) == 0) {
-    out <- shallow(x)
-  } else {
-    out <- vector("list", length(x_names))
-    setattr(out, "names", x_names)
-    for (col in x_names) {
-      if (col %chin% copy_cols) {
-        out[[col]] <- copy(x[[col]])
-      } else {
-        out[[col]] <- x[[col]]
-      }
-    }
-    setDT(out)
-    class <- copy(class(x))
-    setattr(out, "class", class)
-  }
-  out[]
-}
-
-# dt call starting with the j position
+# dt starting with the j position
 dt_j <- function(.df, j, ...) {
   j <- enquo(j)
   dt(.df, , !!j, ...)
@@ -74,9 +35,30 @@ call2_fast_by_i <- function(.df, j, .by) {
 }
 
 # setnames without modify-by-reference
-setnames. <- function(x, old, new) {
-  x <- shallow(x)
-  setnames(x, old, new)
+df_set_names <- function(.df, new_names = NULL, old_names = NULL) {
+  if (is.null(old_names)) {
+    names(.df) <- new_names
+  } else {
+    .df <- shallow(.df)
+    setnames(.df, old_names, new_names)
+  }
+  .df
+}
+
+# setcolorder without modify-by-reference
+df_col_order <- function(.df, new_order) {
+  .df <- shallow(.df)
+  setcolorder(.df, new_order)
+  .df
+}
+
+# Repair names of a data.table
+df_name_repair <- function(.df, .name_repair = "unique") {
+  names(.df) <- vec_as_names(
+    names(.df),
+    repair = .name_repair
+  )
+  .df
 }
 
 # Extract environment from quosures to build the evaluation environment
@@ -102,15 +84,6 @@ get_dt_env <- function(x, ...) {
   env(dt_env, ...)
 }
 
-# Repair names of a data.table
-df_name_repair <- function(.df, .name_repair = "unique") {
-  names(.df) <- vec_as_names(
-    names(.df),
-    repair = .name_repair
-  )
-  .df
-}
-
 # Reduce a list of calls to a single combined call
 call_reduce <- function(x, fun) {
   Reduce(function(x, y) call2(fun, x, y), x)
@@ -126,8 +99,13 @@ f_sort <- function(x) {
       fsort(x)
     )
   } else {
-    vec_sort(x)
+    vec_sort(x, na_value = "smallest")
   }
+}
+
+# Is object a vector and not a matrix
+is_simple_vector <- function(x) {
+  is.atomic(x) && !is.matrix(x)
 }
 
 # Restore user defined attributes
@@ -139,10 +117,10 @@ tidytable_restore <- function(x, to) {
 }
 
 deprecate_old_across <- function(fn) {
-  .what <- glue("tidytable::{fn}_across.()")
-  .details <- glue("Please use `{fn}.(across.())`")
+  msg <- glue("`{fn}_across.()` was deprecated in tidytable 0.6.4.
+              Please use `{fn}.(across.())`")
 
-  deprecate_warn("0.6.4", what = .what, details = .details, id = fn)
+  warn_deprecated(msg = msg, id = fn)
 }
 
 # Does type changes with either ptype or transform logic
@@ -164,16 +142,7 @@ change_types <- function(.df, .to, .list, .ptypes_transform) {
   .df
 }
 
-# deprecated shallow() ------------------------------------------------
-# shallow <- function(x, cols = names(x), reset_class = FALSE) {
-#   stopifnot(is.data.table(x), all(cols %in% names(x)))
-#   ans <- vector("list", length(cols))
-#   setattr(ans, 'names', copy(cols))
-#   for (col in cols) {
-#     ans[[col]] = x[[col]]
-#   }
-#   setDT(ans)
-#   class  <- if (!reset_class) copy(class(x)) else c("data.table", "data.frame")
-#   setattr(ans, 'class', class)
-#   ans[]
-# }
+# For internal testing
+sample. <- function(x, size, replace = TRUE) {
+  sample(x, size, replace)
+}

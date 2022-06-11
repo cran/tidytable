@@ -88,7 +88,9 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
       .df <- eval_tidy(dt_expr, .df, dt_env)
     }
   } else {
-    if (length(dots) > 1) {
+    one_dot <- length(dots) == 1
+
+    if (!one_dot) {
       across_bool <- map_lgl.(dots[-1], quo_is_call, "across.")
 
       if (any(across_bool)) {
@@ -118,23 +120,30 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
       dots <- exprs_auto_name(dots)
       dots_names <- names(dots)
 
-      .df <- fast_copy(.df, dots_names)
+      .df <- fast_copy(.df, vec_unique(dots_names))
 
-      assign <- map2.(syms(dots_names), dots, ~ call2("=", .x, .y))
-      dots_names <- unique(dots_names)
-      output <- call2("list", !!!syms(dots_names))
-      expr <- call2("{", !!!assign, output)
-      j <- call2(":=", call2("c", !!!dots_names), expr)
-      dt_expr <- call2_j(.df, j, .by)
+      needs_sequential <- sequential_check(dots)
+
+      if (one_dot || !needs_sequential) {
+        j <- expr(':='(!!!dots))
+
+        dt_expr <- call2_j(.df, j, .by)
+      } else {
+        assign <- map2.(syms(dots_names), dots, ~ call2("=", .x, .y))
+        dots_names <- unique(dots_names)
+        output <- call2("list", !!!syms(dots_names))
+        expr <- call2("{", !!!assign, output)
+        j <- call2(":=", call2("c", !!!dots_names), expr)
+
+        dt_expr <- call2_j(.df, j, .by)
+      }
 
       .df <- eval_tidy(dt_expr, .df, dt_env)
     }
 
     if (any_null) {
-      j <- call2(":=", !!!null_dots)
-      dt_expr <- call2_j(.df, j)
-
-      .df <- eval_tidy(dt_expr, .df, dt_env)
+      drop_cols <- names(null_dots)
+      .df <- dt_j(.df, (drop_cols) := NULL)
     }
   }
 
@@ -145,8 +154,8 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
   .keep <- arg_match(.keep)
   if (.keep != "all") {
-    keep <- get_keep_vars(.df, dots, .by, .keep)
-    .df <- .df[, ..keep]
+    cols_keep <- get_keep_vars(.df, dots, .by, .keep)
+    .df <- select.(.df, any_of(cols_keep))
   }
 
   .df[]
@@ -167,10 +176,18 @@ mutate..data.frame <- function(.df, ..., .by = NULL,
 # Fixes case when user supplies a single value ex. 1, -1, "a"
 # !is_null(val) allows for columns to be deleted using mutate.(.df, col = NULL)
 mutate_prep <- function(data, dot, dot_name) {
-  if (dot_name %in% names(data) && !is_null(dot)) {
+  if (dot_name %f_in% names(data) && !is_null(dot)) {
     dot <- call2("vec_recycle", dot, expr(.N), .ns = "vctrs")
   }
   dot
+}
+
+sequential_check <- function(dots) {
+  dots_names <- names(dots)
+
+  used_vars <- unique(unlist(map.(dots[-1], extract_used)))
+
+  any(dots_names %f_in% used_vars) || any(vec_duplicate_detect(dots_names))
 }
 
 get_keep_vars <- function(df, dots, .by, .keep = "all") {
@@ -182,7 +199,7 @@ get_keep_vars <- function(df, dots, .by, .keep = "all") {
   df_names <- names(df)
   dots_names <- names(dots)
   used <- unlist(map.(dots, extract_used)) %||% character()
-  used <- used[used %in% df_names]
+  used <- used[used %f_in% df_names]
 
   if (.keep == "used") {
     keep <- c(.by, used, dots_names)
@@ -194,7 +211,7 @@ get_keep_vars <- function(df, dots, .by, .keep = "all") {
   }
 
   keep <- unique(keep)
-  df_names[df_names %in% keep] # Preserve column order
+  df_names[df_names %f_in% keep] # Preserve column order
 }
 
 extract_used <- function(x) {
@@ -204,5 +221,3 @@ extract_used <- function(x) {
     unique(unlist(lapply(x[-1], extract_used)))
   }
 }
-
-globalVariables("..keep")
