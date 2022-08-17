@@ -284,7 +284,7 @@ test_that("can slice_tail when all cols are in .by", {
   expect_equal(sliced_df$x, c("a", "b"))
 })
 
-# slice_min.() ----------------------------------------------------
+# slice_min/slice_max ----------------------------------------------------
 
 test_that("_min.() works", {
   test_df <- tidytable(x = 1:10, y = 20:11, z = c(rep("a", 6), rep("b", 4)))
@@ -327,4 +327,44 @@ test_that("_max.() works with custom function with quosures", {
 
   expect_equal(sliced_df$a, 3)
   expect_equal(sliced_df$b, 6)
+})
+
+test_that("min and max return ties by default", {
+  df <- tidytable(x = c(1, 2, 1, 2, 1))
+  expect_equal(df %>% slice_min.(x) %>% pull.(), c(1, 1, 1))
+  expect_equal(df %>% slice_max.(x) %>% pull.(), c(2, 2))
+
+  expect_equal(df %>% slice_min.(x, with_ties = FALSE) %>% pull.(), 1)
+  expect_equal(df %>% slice_max.(x, with_ties = FALSE) %>% pull.(), 2)
+})
+
+# slice_sample ------------------------------------------------------------
+test_that("_sample works", {
+  df <- tidytable(x = 1:8, y = rep(c("a", "b"), each = 4))
+  res <- df %>%
+    slice_sample.(n = 2, .by = y)
+  expect_equal(res$y, c("a", "a", "b", "b"))
+
+  res <- df %>%
+    slice_sample.(prop = .5, .by = y)
+  expect_equal(res$y, c("a", "a", "b", "b"))
+})
+
+
+test_that("_sample respects weight_by and replaces", {
+  df <- tidytable(x = 1:100, wt = c(1, rep(0, 99)))
+
+  out <- slice_sample.(df, n = 1, weight_by = wt)
+  expect_equal(out$x, 1)
+
+  out <- slice_sample.(df, n = 2, weight_by = wt, replace = TRUE)
+  expect_equal(out$x, c(1, 1))
+})
+
+test_that("_sample edge cases", {
+  df <- tidytable(x = 1:5)
+  expect_equal(nrow(slice_sample.(df, n = 6)), 5)
+
+  # Returns 0 rows
+  expect_equal(nrow(slice_sample.(df, n = 0)), 0)
 })

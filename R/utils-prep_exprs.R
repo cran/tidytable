@@ -14,6 +14,9 @@ prep_expr <- function(x, data, .by = NULL, j = FALSE, dt_env = caller_env(), is_
 
   if (is_symbol(x) || is_atomic(x) || is_null(x)) {
     x
+  } else if (is_call(x, tidytable_fns)) {
+    # Ignore nested calls to tidytable functions, #505
+    x
   } else if (is_call(x, call_fns)) {
     prep_expr_call(x, data, {{ .by }}, j, dt_env, is_top_across)
   } else {
@@ -21,6 +24,14 @@ prep_expr <- function(x, data, .by = NULL, j = FALSE, dt_env = caller_env(), is_
     x
   }
 }
+
+tidytable_fns <- c(
+  "arrange.",
+  "filter.",
+  "mutate.",
+  "slice.",
+  "summarise.", "summarize."
+)
 
 call_fns <- c(
   "$", "[[",
@@ -53,12 +64,12 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env = caller_env()
     quote(.SD)
   } else if (is_call(x, c("ifelse", "if_else"))) {
     if (is_call(x, "if_else")) {
-      x <- call_match(x, internal_if_else)
+      x <- call_match(x, tidytable::if_else.)
     } else {
       x <- call_match(x, base::ifelse)
     }
     x <- unname(x)
-    x[[1]] <- quote(tidytable::ifelse.)
+    x[[1]] <- quote(tidytable::if_else.)
     x[-1] <- lapply(x[-1], prep_expr, data, {{ .by }}, j, dt_env, is_top_across)
     x
   } else if (is_call(x, "case_when", ns = "")) {
@@ -111,6 +122,7 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env = caller_env()
     }
     var
   } else if (is_call(x, "function")) {
+    x[[3]] <- prep_expr(x[[3]], data, {{ .by }}, j, dt_env, is_top_across)
     x
   } else {
     # Catches case when "$" or "[[" is used but is not using .data pronoun
@@ -121,8 +133,4 @@ prep_expr_call <- function(x, data, .by = NULL, j = FALSE, dt_env = caller_env()
 
 is_data_pronoun <- function(x) {
   is_call(x, c("$", "[["), n = 2) && is_symbol(x[[2]], ".data")
-}
-
-internal_if_else <- function(condition, true, false, missing = NULL) {
-  abort("Only for use in prep_exprs")
 }

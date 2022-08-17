@@ -42,14 +42,14 @@ expand_across <- function(.fns, .cols, .names, dots) {
     )
   }
 
-  call_list <- map2.(call_list, names(call_list), replace_cur_column)
+  call_list <- imap.(call_list, replace_cur_column)
 
   call_list
 }
 
 # Generate expression from function call
 fn_to_expr <- function(.fn, .col, ...) {
-  if (is_symbol(.fn) || is_string(.fn) || is_call(.fn, "function")) {
+  if (is_symbol(.fn) || is_string(.fn) || is_call(.fn, c("function", "::"))) {
     call2(.fn, sym(.col), ...)
   } else if (is_call(.fn, "~")) {
     call <- f_rhs(.fn)

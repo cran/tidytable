@@ -45,12 +45,12 @@ arrange..tidytable <- function(.df, ...) {
   } else {
     .df <- copy(.df)
 
-    dt_expr <- call2("setorder", quo(.df), !!!dots, .ns = "data.table")
+    dt_expr <- call2("setorder", quo(.df), !!!dots, na.last = TRUE, .ns = "data.table")
 
     dt_expr <- call2("[", dt_expr)
   }
 
-  eval_tidy(dt_expr)
+  eval_tidy(dt_expr, .df, dt_env)
 }
 
 #' @export

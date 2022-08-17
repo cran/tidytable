@@ -394,8 +394,23 @@ test_that("can use anonymous functions with map, #402", {
   df <- tidytable(x = list(1, 1, 1), y = list(2, 2, 2))
 
   out <- df %>%
-    mutate.(z = map2_dbl.(x, y, function(.x, .y) .x + .y))
+    mutate.(z = map2_dbl.(x, y, function(.x, .y) .x + .y + n()))
 
   expect_named(out, c("x", "y", "z"))
-  expect_equal(out$z, c(3, 3, 3))
+  expect_equal(out$z, c(6, 6, 6))
+})
+
+test_that("nested across calls are handled properly, #505", {
+  list_df <- tidytable(a = 1, b = 2)
+
+  df <- tidytable(x = 1, y = list(list_df))
+
+  res <- df %>%
+    mutate.(
+      y = y %>%
+        map.(~ .x %>% mutate.(across.(.fns = as.character)))
+    )
+
+  expect_equal(res$y[[1]]$a, "1")
+  expect_equal(res$y[[1]]$b, "2")
 })

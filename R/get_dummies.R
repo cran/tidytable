@@ -17,34 +17,25 @@
 #'
 #' @examples
 #' df <- tidytable(
-#'   col1 = c("a", "b", "c", NA),
-#'   col2 = as.factor(c("a", "b", NA, "d")),
-#'   var1 = rnorm(4, 0, 1)
+#'   chr = c("a", "b", NA),
+#'   fct = as.factor(c("a", NA, "c")),
+#'   num = 1:3
 #' )
 #'
 #' # Automatically does all character/factor columns
 #' df %>%
 #'   get_dummies.()
 #'
-#' # Can select one column
 #' df %>%
-#'   get_dummies.(col1)
-#'
-#' # Can select one or multiple columns in a vector of unquoted column names
-#' df %>%
-#'   get_dummies.(c(col1, col2))
-#'
-#' # Can drop certain columns using
-#' df %>%
-#'   get_dummies.(c(where(is.character), -col2))
+#'   get_dummies.(cols = chr)
 #'
 #' df %>%
-#'   get_dummies.(prefix_sep = ".", drop_first = TRUE)
+#'   get_dummies.(cols = c(chr, fct), drop_first = TRUE)
 #'
 #' df %>%
-#'   get_dummies.(c(col1, col2), dummify_na = FALSE)
+#'   get_dummies.(prefix_sep = ".", dummify_na = FALSE)
 get_dummies. <- function(.df,
-                         cols = c(where(is.character), where(is.factor)),
+                         cols = where(~ is.character(.x) | is.factor(.x)),
                          prefix = TRUE,
                          prefix_sep = "_",
                          drop_first = FALSE,
@@ -54,7 +45,7 @@ get_dummies. <- function(.df,
 
 #' @export
 get_dummies..tidytable <- function(.df,
-                                   cols = c(where(is.character), where(is.factor)),
+                                   cols = where(~ is.character(.x) | is.factor(.x)),
                                    prefix = TRUE,
                                    prefix_sep = "_",
                                    drop_first = FALSE,
@@ -75,11 +66,13 @@ get_dummies..tidytable <- function(.df,
 
     unique_vals <- f_sort(unique_vals)
 
-    # Due to above f_sort NA will be the first value if it exists
-    any_na <- is.na(unique_vals[1])
+    len <- length(unique_vals)
+
+    # Due to above f_sort NA will be the last value if it exists
+    any_na <- vec_equal_na(unique_vals[len])
 
     if (any_na) {
-      unique_vals <- unique_vals[-1]
+      unique_vals <- unique_vals[-len]
     }
 
     if (prefix) {
@@ -91,10 +84,10 @@ get_dummies..tidytable <- function(.df,
     }
 
     if (any_na) {
-      not_na <- !is.na(.df[[col_name]])
+      complete <- vec_detect_complete(.df[[col_name]])
       .df <- dt_j(
         .df,
-        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col & ..not_na))
+        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col & ..complete))
       )
     } else {
       .df <- dt_j(
@@ -104,18 +97,18 @@ get_dummies..tidytable <- function(.df,
     }
 
     if (dummify_na && any_na) {
-      .df <- dt_j(.df, (na_col) := as.integer(!not_na))
+      .df <- dt_j(.df, (na_col) := as.integer(!..complete))
     }
   }
 
   .df
 }
 
-globalVariables(c("..not_na", "where"))
+globalVariables(c("..complete", "where"))
 
 #' @export
 get_dummies..data.frame <- function(.df,
-                                    cols = c(where(is.character), where(is.factor)),
+                                    cols = where(~ is.character(.x) | is.factor(.x)),
                                     prefix = TRUE,
                                     prefix_sep = "_",
                                     drop_first = FALSE,

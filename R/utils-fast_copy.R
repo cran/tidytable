@@ -1,26 +1,23 @@
 # Fast copying
-# Deep copy of columns that are being overwritten,
-#   and only does a shallow copy of the other columns.
+# Deep copy of columns that are being overwritten.
+#   Only does a shallow copy of the other columns.
 #   Faster than running `copy()` on an entire data frame.
 fast_copy <- function(x, new_cols = character()) {
-  if (length(new_cols) == 0) return(shallow(x))
-
-  x_names <- names(x)
-  needs_copy <- new_cols %f_in% x_names
-  if (any(needs_copy)) {
-    copy_cols <- new_cols[needs_copy]
-  } else {
-    copy_cols <- character()
+  if (length(new_cols) == 0) {
+    return(shallow(x))
   }
 
-  if (length(copy_cols) == 0) {
-    out <- shallow(x)
-  } else {
+  x_names <- names(x)
+
+  needs_copy <- x_names %in% new_cols
+
+  if (any(needs_copy)) {
     x_names <- copy(x_names)
     out <- vector("list", length(x_names))
     setattr(out, "names", x_names)
-    for (col in x_names) {
-      if (col %f_in% copy_cols) {
+    for (i in seq_along(x_names)) {
+      col <- x_names[[i]]
+      if (needs_copy[[i]]) {
         out[[col]] <- copy(x[[col]])
       } else {
         out[[col]] <- x[[col]]
@@ -29,8 +26,11 @@ fast_copy <- function(x, new_cols = character()) {
     setDT(out)
     class <- copy(class(x))
     setattr(out, "class", class)
+  } else {
+    out <- shallow(x)
   }
-  out[]
+
+  out
 }
 
 # Creates a shallow copy
@@ -41,7 +41,7 @@ shallow <- function(x) {
 
 # deprecated shallow() ------------------------------------------------
 # shallow <- function(x, cols = names(x), reset_class = FALSE) {
-#   stopifnot(is.data.table(x), all(cols %f_in% names(x)))
+#   stopifnot(is.data.table(x), all(cols %in% names(x)))
 #   ans <- vector("list", length(cols))
 #   setattr(ans, 'names', copy(cols))
 #   for (col in cols) {

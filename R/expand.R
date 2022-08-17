@@ -56,13 +56,9 @@ expand..data.frame <- function(.df, ..., .name_repair = "check_unique", .by = NU
 expand_df <- function(.df, ..., .name_repair = .name_repair) {
   dots <- enquos(...)
 
-  dt_env <- get_dt_env(dots, !!!.df)
+  expr <- call2("crossing.", !!!dots, .name_repair = .name_repair, .ns = "tidytable")
 
-  dots <- map.(dots, quo_squash)
-
-  out <- call2("crossing.", !!!dots, .name_repair = .name_repair, .ns = "tidytable")
-
-  eval_tidy(out, env = dt_env)
+  eval_tidy(expr, .df)
 }
 
 #' @export
@@ -71,6 +67,6 @@ nesting. <- function(..., .name_repair = "check_unique") {
   cols <- dots_list(..., .named = TRUE)
   out <- df_name_repair(new_tidytable(cols), .name_repair)
   out <- distinct.(out)
-  setorder(out)
+  setorder(out, na.last = TRUE)
   out
 }

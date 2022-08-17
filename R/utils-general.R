@@ -4,18 +4,14 @@ dt_j <- function(.df, j, ...) {
   dt(.df, , !!j, ...)
 }
 
-# Create a call to `[.data.table` (i position)
-call2_i <- function(.df, i = NULL) {
-  # Use enquo(.df) to clean up error messages, #305
-  call2("[", enquo(.df), i)
-}
-
 # Create a call to `[.data.table` (j position)
-call2_j <- function(.df, j = NULL, .by = NULL, .keyby = NULL, ...) {
-  if (is.null(.keyby)) {
-    dt_expr <- call2("[", enquo(.df), , j, by = .by, ...)
+call2_j <- function(.df, j = NULL, .by = NULL, .keyby = FALSE, ...) {
+  if (length(.by) == 0) {
+    dt_expr <- call2("[", enquo(.df), , j, ...)
+  } else if (.keyby) {
+    dt_expr <- call2("[", enquo(.df), , j, keyby = .by, ...)
   } else {
-    dt_expr <- call2("[", enquo(.df), , j, keyby = .keyby, ...)
+    dt_expr <- call2("[", enquo(.df), , j, by = .by, ...)
   }
 
   if (is_call(j, c(":=", "let"))) {
@@ -25,9 +21,20 @@ call2_j <- function(.df, j = NULL, .by = NULL, .keyby = NULL, ...) {
   dt_expr
 }
 
+# Create a call to `[.data.table` (i position)
+call2_i <- function(.df, i = NULL, .by = NULL) {
+  if (length(.by) == 0) {
+    # Use enquo(.df) to clean up error messages, #305
+    call2("[", enquo(.df), i)
+  } else {
+    call2_i_by(.df, i, .by)
+  }
+}
+
 # Uses fast by trick for i position using .I
 # For use in slice/filter
-call2_fast_by_i <- function(.df, j, .by) {
+call2_i_by <- function(.df, i, .by) {
+  j <- expr(.I[!!i])
   dt_expr <- call2_j(.df, j, .by)
   dt_expr <- call2("$", dt_expr, expr(V1))
   dt_expr <- call2_i(.df, dt_expr)
@@ -96,11 +103,16 @@ f_sort <- function(x) {
   # See: https://github.com/Rdatatable/data.table/issues/5051
   if (is.character(x)) {
     suppressWarnings(
-      fsort(x)
+      fsort(x, na.last = TRUE)
     )
   } else {
-    vec_sort(x, na_value = "smallest")
+    vec_sort(x)
   }
+}
+
+# imap implementation - for internal use only
+imap. <- function(.x, .f, ...) {
+  map2.(.x, names(.x) %||% seq_along(.x), .f, ...)
 }
 
 # Is object a vector and not a matrix
@@ -117,10 +129,11 @@ tidytable_restore <- function(x, to) {
 }
 
 deprecate_old_across <- function(fn) {
-  msg <- glue("`{fn}_across.()` was deprecated in tidytable 0.6.4.
+  msg <- glue("`{fn}_across.()` is defunct as of v0.8.1 (Aug 2022).
+              It has been deprecated with warnings since v0.6.4 (Jul 2021).
               Please use `{fn}.(across.())`")
 
-  warn_deprecated(msg = msg, id = fn)
+  stop_defunct(msg)
 }
 
 # Does type changes with either ptype or transform logic
