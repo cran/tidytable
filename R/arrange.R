@@ -1,9 +1,7 @@
 #' Arrange/reorder rows
 #'
-#' @description Order rows in ascending or descending order.
-#'
-#' Note: `data.table` orders character columns slightly differently than `dplyr::arrange()` by
-#' ordering in the "C-locale". See `?data.table::setorder` for more details.
+#' @description
+#' Order rows in ascending or descending order.
 #'
 #' @param .df A data.frame or data.table
 #' @param ... Variables to arrange by
@@ -18,10 +16,17 @@
 #' )
 #'
 #' df %>%
-#'   arrange.(c, -a)
+#'   arrange(c, -a)
 #'
 #' df %>%
-#'   arrange.(c, desc(a))
+#'   arrange(c, desc(a))
+arrange <- function(.df, ...) {
+  arrange.(.df, ...)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit arrange
 arrange. <- function(.df, ...) {
   UseMethod("arrange.")
 }
@@ -36,7 +41,7 @@ arrange..tidytable <- function(.df, ...) {
 
   dots <- prep_exprs(dots, .df, dt_env = dt_env)
 
-  is_expr <- map_lgl.(dots, ~ !is_symbol(.x) && !is_call(.x, "-", 1))
+  is_expr <- map_lgl(dots, ~ !is_symbol(.x) && !is_call(.x, "-", 1))
 
   if (any(is_expr)) {
     i <- expr(order(!!!dots))
@@ -56,5 +61,5 @@ arrange..tidytable <- function(.df, ...) {
 #' @export
 arrange..data.frame <- function(.df, ...) {
   .df <- as_tidytable(.df)
-  arrange.(.df, ...)
+  arrange(.df, ...)
 }

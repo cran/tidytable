@@ -29,11 +29,12 @@ df <- data.table(
 )
 
 df \%>\%
-  fill.(a, b)
+  fill(a, b)
 
 df \%>\%
-  fill.(a, b, .by = groups)
+  fill(a, b, .by = groups)
 
 df \%>\%
-  fill.(a, b, .direction = "downup", .by = groups)
+  fill(a, b, .direction = "downup", .by = groups)
 }
+\keyword{internal}

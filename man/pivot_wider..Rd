@@ -13,7 +13,7 @@ pivot_wider.(
   names_prefix = "",
   names_glue = NULL,
   names_sort = FALSE,
-  names_repair = "check_unique",
+  names_repair = "unique",
   values_fill = NULL,
   values_fn = NULL
 )
@@ -61,10 +61,11 @@ df <- data.table(
 )
 
 df \%>\%
-  pivot_wider.(names_from = b, values_from = vals)
+  pivot_wider(names_from = b, values_from = vals)
 
 df \%>\%
-  pivot_wider.(
+  pivot_wider(
     names_from = b, values_from = vals, names_prefix = "new_"
   )
 }
+\keyword{internal}

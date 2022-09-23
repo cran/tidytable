@@ -9,7 +9,7 @@ n.()
 \description{
 Helper function that can be used to find counts by group.
 
-Can be used inside \code{summarize.()}, \code{mutate.()}, & \code{filter.()}
+Can be used inside \code{summarize()}, \code{mutate()}, & \code{filter()}
 }
 \examples{
 df <- data.table(
@@ -19,9 +19,6 @@ df <- data.table(
  )
 
 df \%>\%
-  summarize.(count = n.(), .by = z)
-
-# The dplyr version `n()` also works
-df \%>\%
-  summarize.(count = n(), .by = z)
+  summarize(count = n(), .by = z)
 }
+\keyword{internal}

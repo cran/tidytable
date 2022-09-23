@@ -27,8 +27,9 @@ df <- data.table(
 )
 
 df \%>\%
-  nest.(data = c(a, b))
+  nest(data = c(a, b))
 
 df \%>\%
-  nest.(data = where(is.numeric))
+  nest(data = where(is.numeric))
 }
+\keyword{internal}

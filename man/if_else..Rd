@@ -26,11 +26,12 @@ Fast version of \code{base::ifelse()}.
 }
 \examples{
 x <- 1:5
-if_else.(x < 3, 1, 0)
+if_else(x < 3, 1, 0)
 
-# Can also be used inside of mutate.()
+# Can also be used inside of mutate()
 df <- data.table(x = x)
 
 df \%>\%
-  mutate.(new_col = if_else.(x < 3, 1, 0))
+  mutate(new_col = if_else(x < 3, 1, 0))
 }
+\keyword{internal}

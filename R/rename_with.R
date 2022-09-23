@@ -9,7 +9,6 @@
 #' @param ... Other parameters to pass to the function
 #'
 #' @export
-#' @md
 #'
 #' @examples
 #' df <- data.table(
@@ -20,13 +19,20 @@
 #' )
 #'
 #' df %>%
-#'   rename_with.(toupper)
+#'   rename_with(toupper)
 #'
 #' df %>%
-#'   rename_with.(~ toupper(.x))
+#'   rename_with(~ toupper(.x))
 #'
 #' df %>%
-#'   rename_with.(~ toupper(.x), .cols = c(x, double_x))
+#'   rename_with(~ toupper(.x), .cols = c(x, double_x))
+rename_with <- function(.df, .fn = NULL, .cols = everything(), ...) {
+  rename_with.(.df, .fn, {{ .cols }}, ...)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit rename_with
 rename_with. <- function(.df, .fn = NULL, .cols = everything(), ...) {
   UseMethod("rename_with.")
 }
@@ -51,5 +57,6 @@ rename_with..tidytable <- function(.df, .fn = NULL, .cols = everything(), ...) {
 #' @export
 rename_with..data.frame <- function(.df, .fn = NULL, .cols = everything(), ...) {
   .df <- as_tidytable(.df)
-  rename_with.(.df, .fn, {{ .cols }}, ...)
+  rename_with(.df, .fn, {{ .cols }}, ...)
 }
+

@@ -10,7 +10,7 @@ desc.(x)
 \item{x}{Variable to arrange in descending order}
 }
 \description{
-Arrange in descending order. Can be used inside of \code{arrange.()}
+Arrange in descending order. Can be used inside of \code{arrange()}
 }
 \examples{
 df <- data.table(
@@ -20,5 +20,6 @@ df <- data.table(
 )
 
 df \%>\%
-  arrange.(c, desc.(a))
+  arrange(c, desc(a))
 }
+\keyword{internal}

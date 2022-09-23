@@ -27,11 +27,12 @@ df <- tidytable(
 )
 
 df \%>\%
-  group_split.(c, d)
+  group_split(c, d)
 
 df \%>\%
-  group_split.(c, d, .keep = FALSE)
+  group_split(c, d, .keep = FALSE)
 
 df \%>\%
-  group_split.(c, d, .named = TRUE)
+  group_split(c, d, .named = TRUE)
 }
+\keyword{internal}

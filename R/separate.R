@@ -23,11 +23,25 @@
 #'
 #' # "sep" can be automatically detected (slower)
 #' df %>%
-#'   separate.(x, into = c("c1", "c2"))
+#'   separate(x, into = c("c1", "c2"))
 #'
 #' # Faster if "sep" is provided
 #' df %>%
-#'   separate.(x, into = c("c1", "c2"), sep = ".")
+#'   separate(x, into = c("c1", "c2"), sep = ".")
+separate <- function(.df, col, into,
+                     sep = "[^[:alnum:]]+",
+                     remove = TRUE,
+                     convert = FALSE,
+                     ...) {
+  separate.(
+    .df, col = {{ col }}, into = into, sep = sep,
+    remove = remove, convert = convert, ...
+  )
+}
+
+#' @export
+#' @keywords internal
+#' @inherit separate
 separate. <- function(.df, col, into,
                       sep = "[^[:alnum:]]+",
                       remove = TRUE,
@@ -83,8 +97,9 @@ separate..data.frame <- function(.df, col, into,
                                  convert = FALSE,
                                  ...) {
   .df <- as_tidytable(.df)
-  separate.(
+  separate(
     .df, col = {{ col }}, into = into, sep = sep,
     remove = remove, convert = convert, ...
   )
 }
+

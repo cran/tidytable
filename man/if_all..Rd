@@ -2,12 +2,9 @@
 % Please edit documentation in R/if_all-if_any.R
 \name{if_all.}
 \alias{if_all.}
-\alias{if_any.}
 \title{Create conditions on a selection of columns}
 \usage{
 if_all.(.cols = everything(), .fns = NULL, ...)
-
-if_any.(.cols = everything(), .fns = NULL, ...)
 }
 \arguments{
 \item{.cols}{Selection of columns}
@@ -21,8 +18,9 @@ Helpers to apply a filter across a selection of columns.
 }
 \examples{
 iris \%>\%
-  filter.(if_any.(ends_with("Width"), ~ .x > 4))
+  filter(if_any(ends_with("Width"), ~ .x > 4))
 
 iris \%>\%
-  filter.(if_all.(ends_with("Width"), ~ .x > 2))
+  filter(if_all(ends_with("Width"), ~ .x > 2))
 }
+\keyword{internal}

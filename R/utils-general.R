@@ -41,31 +41,38 @@ call2_i_by <- function(.df, i, .by) {
   dt_expr
 }
 
+globalVariables("V1")
+
 # setnames without modify-by-reference
 df_set_names <- function(.df, new_names = NULL, old_names = NULL) {
   if (is.null(old_names)) {
-    names(.df) <- new_names
+    out <- set_names(.df, new_names)
   } else {
-    .df <- shallow(.df)
-    setnames(.df, old_names, new_names)
+    out <- fast_copy(.df)
+    setnames(out, old_names, new_names)
   }
-  .df
+  out
 }
 
 # setcolorder without modify-by-reference
 df_col_order <- function(.df, new_order) {
-  .df <- shallow(.df)
-  setcolorder(.df, new_order)
-  .df
+  out <- fast_copy(.df)
+  setcolorder(out, new_order)
+  out
 }
 
 # Repair names of a data.table
 df_name_repair <- function(.df, .name_repair = "unique") {
-  names(.df) <- vec_as_names(
-    names(.df),
-    repair = .name_repair
-  )
-  .df
+  new_names <- vec_as_names(names(.df), repair = .name_repair)
+  df_set_names(.df, new_names)
+}
+
+check_by <- function(.by) {
+  .by <- enquo(.by)
+  if (!quo_is_null(.by)) {
+    msg <- "`.by` cannot be used on a grouped tidytable. Please `ungroup()` your data."
+    stop(msg, call. = FALSE)
+  }
 }
 
 # Extract environment from quosures to build the evaluation environment
@@ -74,8 +81,8 @@ get_dt_env <- function(x, ...) {
   if (length(x) == 0) {
     dt_env <- .default
   } else if (is_quosures(x)) {
-    envs <- map.(x, get_env)
-    non_empty <- map_lgl.(envs, ~ !identical(.x, empty_env()))
+    envs <- map(x, get_env)
+    non_empty <- map_lgl(envs, ~ !identical(.x, empty_env()))
     if (any(non_empty)) {
       dt_env <- envs[non_empty][[1]]
     } else {
@@ -91,9 +98,11 @@ get_dt_env <- function(x, ...) {
   env(dt_env, ...)
 }
 
-# Reduce a list of calls to a single combined call
-call_reduce <- function(x, fun) {
-  Reduce(function(x, y) call2(fun, x, y), x)
+# Set the class attribute of an object
+# Defaults to a basic tidytable
+set_class <- function(x, .class = c("tidytable", "data.table", "data.frame")) {
+  class(x) <- .class
+  x
 }
 
 # radix sort
@@ -111,13 +120,18 @@ f_sort <- function(x) {
 }
 
 # imap implementation - for internal use only
-imap. <- function(.x, .f, ...) {
-  map2.(.x, names(.x) %||% seq_along(.x), .f, ...)
+imap <- function(.x, .f, ...) {
+  map2(.x, names(.x) %||% seq_along(.x), .f, ...)
 }
 
 # Is object a vector and not a matrix
 is_simple_vector <- function(x) {
   is.atomic(x) && !is.matrix(x)
+}
+
+# Reduce a list of calls to a single combined call
+call_reduce <- function(x, fun) {
+  Reduce(function(x, y) call2(fun, x, y), x)
 }
 
 # Restore user defined attributes
@@ -128,6 +142,19 @@ tidytable_restore <- function(x, to) {
   vec_restore(x, to)
 }
 
+check_across <- function(dots, .fn) {
+  use_across <- map_lgl(dots, quo_is_call, c("across", "across."))
+
+  if (any(use_across)) {
+    abort(
+      glue(
+      "`across()` is unnecessary in `{.fn}()`.
+      Please directly use tidyselect.
+      Ex: df %>% {.fn}(where(is.numeric))")
+    )
+  }
+}
+
 deprecate_old_across <- function(fn) {
   msg <- glue("`{fn}_across.()` is defunct as of v0.8.1 (Aug 2022).
               It has been deprecated with warnings since v0.6.4 (Jul 2021).
@@ -136,22 +163,34 @@ deprecate_old_across <- function(fn) {
   stop_defunct(msg)
 }
 
-# Does type changes with either ptype or transform logic
+# Does type changes with ptype & transform logic
 # For use in pivot_longer/unnest_longer/unnest_wider
-change_types <- function(.df, .to, .list, .ptypes_transform) {
-  vars <- intersect(.to, names(.list))
-  if (length(vars) > 0) {
-    if (.ptypes_transform == "ptypes") {
-      calls <- map2.(syms(vars), .list, ~ call2("vec_cast", .x, .y))
-    } else if (.ptypes_transform == "transform") {
-      .list <- map.(.list, as_function)
-      calls <- map2.(.list, syms(vars), call2)
-    } else {
-      abort("Please specify ptypes or transform")
+change_types <- function(.df, .cols, .ptypes = NULL, .transform = NULL) {
+  if (!is.null(.ptypes)) {
+    if (!vec_is_list(.ptypes)) {
+      # Allow providing a single ptype for all cols
+      .ptypes <- vec_rep(list(.ptypes), length(.cols))
+      .ptypes <- set_names(.ptypes, .cols)
     }
-    names(calls) <- vars
-    .df <- mutate.(.df, !!!calls)
+    .cols <- intersect(.cols, names(.ptypes))
+    ptype_exprs <- map2(syms(.cols), .ptypes, ~ call2("vec_cast", .x, .y, .ns = "vctrs"))
+    names(ptype_exprs) <- .cols
+    .df <- mutate(.df, !!!ptype_exprs)
   }
+
+  if (!is.null(.transform)) {
+    if (!vec_is_list(.transform)) {
+      # Allow providing a single transform for all cols
+      .transform <- vec_rep(list(.transform), length(.cols))
+      .transform <- set_names(.transform, .cols)
+    }
+    .cols <- intersect(.cols, names(.transform))
+    .transform <- map(.transform, as_function)
+    transform_exprs <- map2(.transform, syms(.cols), call2)
+    names(transform_exprs) <- .cols
+    .df <- mutate(.df, !!!transform_exprs)
+  }
+
   .df
 }
 

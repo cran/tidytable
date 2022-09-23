@@ -19,13 +19,20 @@
 #' )
 #'
 #' df %>%
-#'   relocate.(c, .before = b)
+#'   relocate(c, .before = b)
 #'
 #' df %>%
-#'   relocate.(a, b, .after = c)
+#'   relocate(a, b, .after = c)
 #'
 #' df %>%
-#'   relocate.(where(is.numeric), .after = c)
+#'   relocate(where(is.numeric), .after = c)
+relocate <- function(.df, ..., .before = NULL, .after = NULL) {
+  relocate.(.df, ..., .before = {{ .before }}, .after = {{ .after }})
+}
+
+#' @export
+#' @keywords internal
+#' @inherit relocate
 relocate. <- function(.df, ..., .before = NULL, .after = NULL) {
   UseMethod("relocate.")
 }
@@ -73,6 +80,7 @@ relocate..tidytable <- function(.df, ..., .before = NULL, .after = NULL) {
 #' @export
 relocate..data.frame <- function(.df, ..., .before = NULL, .after = NULL) {
   .df <- as_tidytable(.df)
-  relocate.(.df, ..., .before = {{ .before }}, .after = {{ .after }})
+  relocate(.df, ..., .before = {{ .before }}, .after = {{ .after }})
 }
+
 

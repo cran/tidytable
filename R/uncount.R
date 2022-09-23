@@ -10,9 +10,16 @@
 #' @examples
 #' df <- data.table(x = c("a", "b"), n = c(1, 2))
 #'
-#' uncount.(df, n)
+#' uncount(df, n)
 #'
-#' uncount.(df, n, .id = "id")
+#' uncount(df, n, .id = "id")
+uncount <- function(.df, weights, .remove = TRUE, .id = NULL) {
+  uncount.(.df, {{ weights }}, .remove, .id)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit uncount
 uncount. <- function(.df, weights, .remove = TRUE, .id = NULL) {
   UseMethod("uncount.")
 }
@@ -21,7 +28,7 @@ uncount. <- function(.df, weights, .remove = TRUE, .id = NULL) {
 uncount..tidytable <- function(.df, weights, .remove = TRUE, .id = NULL) {
   weights <- enquo(weights)
 
-  .reps <- pull.(.df, !!weights)
+  .reps <- pull(.df, !!weights)
 
   result_df <- vec_rep_each(.df, .reps)
 
@@ -39,5 +46,6 @@ uncount..tidytable <- function(.df, weights, .remove = TRUE, .id = NULL) {
 #' @export
 uncount..data.frame <- function(.df, weights, .remove = TRUE, .id = NULL) {
   .df <- as_tidytable(.df)
-  uncount.(.df, {{ weights }}, .remove, .id)
+  uncount(.df, {{ weights }}, .remove, .id)
 }
+

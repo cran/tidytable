@@ -1,7 +1,7 @@
 #' Add/modify/delete columns
 #'
 #' @description
-#' With `mutate.()` you can do 3 things:
+#' With `mutate()` you can do 3 things:
 #' * Add new columns
 #' * Modify existing columns
 #' * Delete columns
@@ -18,7 +18,7 @@
 #'     for checking your work as it displays inputs and outputs side-by-side.
 #'   * `"unused"` keeps only existing variables **not** used to make new
 #'     variables.
-#'   * `"none"`, only keeps grouping keys (like [transmute.()]).
+#'   * `"none"`, only keeps grouping keys (like [transmute()]).
 #' @param .before,.after Optionally indicate where new columns should be placed.
 #' Defaults to the right side of the data frame.
 #'
@@ -32,19 +32,34 @@
 #' )
 #'
 #' df %>%
-#'   mutate.(double_a = a * 2,
-#'           a_plus_b = a + b)
+#'   mutate(double_a = a * 2,
+#'          a_plus_b = a + b)
 #'
 #' df %>%
-#'   mutate.(double_a = a * 2,
-#'           avg_a = mean(a),
-#'           .by = c)
+#'   mutate(double_a = a * 2,
+#'          avg_a = mean(a),
+#'          .by = c)
 #'
 #' df %>%
-#'   mutate.(double_a = a * 2, .keep = "used")
+#'   mutate(double_a = a * 2, .keep = "used")
 #'
 #' df %>%
-#'   mutate.(double_a = a * 2, .after = a)
+#'   mutate(double_a = a * 2, .after = a)
+mutate <- function(.df, ..., .by = NULL,
+                   .keep = c("all", "used", "unused", "none"),
+                   .before = NULL, .after = NULL) {
+  mutate.(
+    .df, ...,
+    .by = {{ .by }},
+    .keep = .keep,
+    .before = {{ .before }},
+    .after = {{ .after }}
+  )
+}
+
+#' @export
+#' @keywords internal
+#' @inherit mutate
 mutate. <- function(.df, ..., .by = NULL,
                     .keep = c("all", "used", "unused", "none"),
                     .before = NULL, .after = NULL) {
@@ -53,8 +68,8 @@ mutate. <- function(.df, ..., .by = NULL,
 
 #' @export
 mutate..tidytable <- function(.df, ..., .by = NULL,
-                              .keep = c("all", "used", "unused", "none"),
-                              .before = NULL, .after = NULL) {
+                             .keep = c("all", "used", "unused", "none"),
+                             .before = NULL, .after = NULL) {
   .df <- fast_copy(.df)
 
   .by <- enquo(.by)
@@ -74,10 +89,11 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
   if (quo_is_null(.by)) {
     for (i in seq_along(dots)) {
-      dots_i <- prep_exprs(dots[i], .df, !!.by, j = TRUE, dt_env, quo_is_call(dots[[i]], "across."))
+      top_across <- quo_is_call(dots[[i]], c("across.", "across"))
+      dots_i <- prep_exprs(dots[i], .df, !!.by, j = TRUE, dt_env, top_across)
       if (length(dots_i) == 0) next
       dots_i <- exprs_auto_name(dots_i)
-      dots_i <- imap.(dots_i, ~ mutate_prep(.df, .x, .y))
+      dots_i <- imap(dots_i, ~ mutate_prep(.df, .x, .y))
 
       j <- expr(':='(!!!dots_i))
 
@@ -89,10 +105,10 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
     one_dot <- length(dots) == 1
 
     if (!one_dot) {
-      across_bool <- map_lgl.(dots[-1], quo_is_call, "across.")
+      across_bool <- map_lgl(dots[-1], quo_is_call, "across.")
 
       if (any(across_bool)) {
-        abort("across.() can only be used in the first position of mutate.()
+        abort("across() can only be used in the first position of mutate()
               when `.by` is used.")
       }
     }
@@ -103,7 +119,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
     # Check for NULL inputs so columns can be deleted
     # Only delete if the NULL is the last call
-    null_bool <- map_lgl.(dots, is_null)
+    null_bool <- map_lgl(dots, is_null)
     is_last <- !duplicated(names(dots), fromLast = TRUE)
     needs_removal <- null_bool & is_last
     any_null <- any(needs_removal)
@@ -127,7 +143,7 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
         dt_expr <- call2_j(.df, j, .by)
       } else {
-        assign <- map2.(syms(dots_names), dots, ~ call2("=", .x, .y))
+        assign <- map2(syms(dots_names), dots, ~ call2("=", .x, .y))
         dots_names <- unique(dots_names)
         output <- call2("list", !!!syms(dots_names))
         expr <- call2("{", !!!assign, output)
@@ -147,16 +163,31 @@ mutate..tidytable <- function(.df, ..., .by = NULL,
 
   if (needs_relocate) {
     new_names <- setdiff(names(.df), original_names)
-    .df <- relocate.(.df, !!!syms(new_names), .before = !!.before, .after = !!.after)
+    .df <- relocate(.df, !!!syms(new_names), .before = !!.before, .after = !!.after)
   }
 
   .keep <- arg_match(.keep)
   if (.keep != "all") {
     cols_keep <- get_keep_vars(.df, dots, .by, .keep)
-    .df <- select.(.df, any_of(cols_keep))
+    .df <- select(.df, any_of(cols_keep))
   }
 
-  .df[]
+  .df
+}
+
+#' @export
+mutate..grouped_tt <- function(.df, ..., .by = NULL,
+                              .keep = c("all", "used", "unused", "none"),
+                              .before = NULL, .after = NULL) {
+  check_by({{ .by }})
+  .by <- group_vars(.df)
+  out <- ungroup(.df)
+  out <- mutate(
+    out, ..., .by = all_of(.by),
+    .keep = .keep,
+    .before = {{ .before }}, .after = {{ .after }}
+  )
+  group_by(out, all_of(.by))
 }
 
 #' @export
@@ -164,15 +195,36 @@ mutate..data.frame <- function(.df, ..., .by = NULL,
                                .keep = c("all", "used", "unused", "none"),
                                .before = NULL, .after = NULL) {
   .df <- as_tidytable(.df)
-  mutate.(
-    .df, ..., .by = {{ .by }}, .keep = .keep,
+  mutate(
+    .df, ..., .by = {{ .by }},
+    .keep = .keep,
     .before = {{ .before }}, .after = {{ .after }}
   )
 }
 
+#' @export
+mutate..rowwise_tt <- function(.df, ..., .by = NULL,
+                               .keep = c("all", "used", "unused", "none"),
+                               .before = NULL, .after = NULL) {
+  check_by({{ .by }})
+  out <- ungroup(.df)
+
+  out <- mutate(out, .rowwise_id = .I)
+
+  out <- mutate(out, ...,
+                .by = .rowwise_id,
+                .keep = .keep,
+                .before = {{ .before }},
+                .after = {{ .after }})
+
+  out <- mutate(out, .rowwise_id = NULL)
+
+  rowwise(out)
+}
+
 # vec_recycle() prevents modify-by-reference if the column already exists in the data.table
 # Fixes case when user supplies a single value ex. 1, -1, "a"
-# !is_null(val) allows for columns to be deleted using mutate.(.df, col = NULL)
+# !is_null(val) allows for columns to be deleted using mutate(.df, col = NULL)
 mutate_prep <- function(data, dot, dot_name) {
   if (dot_name %in% names(data) && !is_null(dot)) {
     dot <- call2("vec_recycle", dot, expr(.N), .ns = "vctrs")
@@ -183,7 +235,7 @@ mutate_prep <- function(data, dot, dot_name) {
 sequential_check <- function(dots) {
   dots_names <- names(dots)
 
-  used_vars <- unique(unlist(map.(dots[-1], extract_used)))
+  used_vars <- unique(unlist(map(dots[-1], extract_used)))
 
   any(dots_names %in% used_vars) || any(vec_duplicate_detect(dots_names))
 }
@@ -196,7 +248,7 @@ get_keep_vars <- function(df, dots, .by, .keep = "all") {
   }
   df_names <- names(df)
   dots_names <- names(dots)
-  used <- unlist(map.(dots, extract_used)) %||% character()
+  used <- unlist(map(dots, extract_used)) %||% character()
   used <- used[used %in% df_names]
 
   if (.keep == "used") {

@@ -40,14 +40,15 @@ df <- tidytable(
 
 # Automatically does all character/factor columns
 df \%>\%
-  get_dummies.()
+  get_dummies()
 
 df \%>\%
-  get_dummies.(cols = chr)
+  get_dummies(cols = chr)
 
 df \%>\%
-  get_dummies.(cols = c(chr, fct), drop_first = TRUE)
+  get_dummies(cols = c(chr, fct), drop_first = TRUE)
 
 df \%>\%
-  get_dummies.(prefix_sep = ".", dummify_na = FALSE)
+  get_dummies(prefix_sep = ".", dummify_na = FALSE)
 }
+\keyword{internal}

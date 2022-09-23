@@ -20,15 +20,22 @@
 #'
 #' # Grab column by name
 #' df %>%
-#'   pull.(y)
+#'   pull(y)
 #'
 #' # Grab column by position
 #' df %>%
-#'   pull.(1)
+#'   pull(1)
 #'
 #' # Defaults to last column
 #' df %>%
-#'   pull.()
+#'   pull()
+pull <- function(.df, var = -1, name = NULL) {
+  pull.(.df, {{ var }}, {{ name }})
+}
+
+#' @export
+#' @keywords internal
+#' @inherit pull
 pull. <- function(.df, var = -1, name = NULL) {
   UseMethod("pull.")
 }
@@ -46,13 +53,15 @@ pull..data.frame <- function(.df, var = -1, name = NULL) {
 }
 
 .pull <- function(.df, var) {
-  var_list <- as.list(seq_along(.df))
+  vars <- as.list(seq_along(.df))
 
-  names(var_list) <- names(.df)
+  names(vars) <- names(.df)
 
-  .var <- eval_tidy(enquo(var), var_list)
+  var <- eval_tidy(enquo(var), vars)
 
-  if (.var < 0) .var <- length(var_list) + .var + 1
+  if (var < 0) {
+    var <- length(vars) + var + 1
+  }
 
-  .df[[.var]]
+  .df[[var]]
 }

@@ -12,7 +12,6 @@
 #' @param .by Columns to group by when filling should be done by group
 #'
 #' @export
-#' @md
 #'
 #' @examples
 #' df <- data.table(
@@ -22,13 +21,22 @@
 #' )
 #'
 #' df %>%
-#'   fill.(a, b)
+#'   fill(a, b)
 #'
 #' df %>%
-#'   fill.(a, b, .by = groups)
+#'   fill(a, b, .by = groups)
 #'
 #' df %>%
-#'   fill.(a, b, .direction = "downup", .by = groups)
+#'   fill(a, b, .direction = "downup", .by = groups)
+fill <- function(.df, ...,
+                 .direction = c("down", "up", "downup", "updown"),
+                 .by = NULL) {
+  fill.(.df, ..., .direction = .direction, .by = {{ .by }})
+}
+
+#' @export
+#' @keywords internal
+#' @inherit fill
 fill. <- function(.df, ...,
                   .direction = c("down", "up", "downup", "updown"),
                   .by = NULL) {
@@ -43,15 +51,15 @@ fill..tidytable <- function(.df, ...,
 
   dots <- enquos(...)
 
-  mutate.(.df, across.(c(!!!dots), fill_na, .direction), .by = {{ .by }})
+  mutate(.df, across(c(!!!dots), fill_na, .direction), .by = {{ .by }})
 }
 
 #' @export
 fill..data.frame <- function(.df, ...,
-                             .direction = c("down", "up", "downup", "updown"),
-                             .by = NULL) {
+                            .direction = c("down", "up", "downup", "updown"),
+                            .by = NULL) {
   .df <- as_tidytable(.df)
-  fill.(.df, ..., .direction = .direction, .by = {{ .by }})
+  fill(.df, ..., .direction = .direction, .by = {{ .by }})
 }
 
 fill_na <- function(x, direction) {
@@ -75,3 +83,4 @@ fill_na <- function(x, direction) {
     vec_fill_missing(x, direction = direction)
   }
 }
+

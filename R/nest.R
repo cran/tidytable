@@ -20,17 +20,26 @@
 #' )
 #'
 #' df %>%
-#'   nest.(data = c(a, b))
+#'   nest(data = c(a, b))
 #'
 #' df %>%
-#'   nest.(data = where(is.numeric))
+#'   nest(data = where(is.numeric))
+nest <- function(.df, ..., .names_sep = NULL) {
+  nest.(.df, ..., .names_sep = .names_sep)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit nest
 nest. <- function(.df, ..., .names_sep = NULL) {
   UseMethod("nest.")
 }
 
 #' @export
 nest..tidytable <- function(.df, ..., .names_sep = NULL) {
-  if (!is.null(.names_sep)) vec_assert(.names_sep, character(), 1)
+  if (!is.null(.names_sep)) {
+    vec_assert(.names_sep, character(), 1)
+  }
 
   dots <- enquos(...)
 
@@ -39,7 +48,7 @@ nest..tidytable <- function(.df, ..., .names_sep = NULL) {
   }
 
   if (!is_named(dots)) {
-    abort("All elements of `...` must be named. For example `nest.(data = c(x, y))`")
+    abort("All elements of `...` must be named. For example `nest(data = c(x, y))`")
   }
 
   .key <- names(dots)
@@ -56,7 +65,15 @@ nest..tidytable <- function(.df, ..., .names_sep = NULL) {
     dots <- syms(new_names)
   }
 
-  nest_by.(.df, -c(!!!dots), .key = .key)
+  nest_by(.df, -c(!!!dots), .key = .key)
+}
+
+#' @export
+nest..grouped_tt <- function(.df, ..., .names_sep = NULL) {
+  .groups <- group_vars(.df)
+  out <- ungroup(.df)
+  out <- nest(out, data = -all_of(.groups), .names_sep = .names_sep)
+  group_by(out, all_of(.groups))
 }
 
 #' @export
@@ -64,3 +81,4 @@ nest..data.frame <- function(.df, ..., .names_sep = NULL) {
   .df <- as_tidytable(.df)
   nest.(.df, ..., .names_sep = .names_sep)
 }
+

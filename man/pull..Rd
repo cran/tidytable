@@ -29,13 +29,14 @@ df <- data.table(
 
 # Grab column by name
 df \%>\%
-  pull.(y)
+  pull(y)
 
 # Grab column by position
 df \%>\%
-  pull.(1)
+  pull(1)
 
 # Defaults to last column
 df \%>\%
-  pull.()
+  pull()
 }
+\keyword{internal}

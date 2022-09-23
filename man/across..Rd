@@ -19,8 +19,8 @@ The default (\code{NULL}) is equivalent to \code{"{.col}"} for a single function
 when a list is used for \code{.fns}.}
 }
 \description{
-Apply a function across a selection of columns. For use in \code{arrange.()},
-\code{mutate.()}, and \code{summarize.()}.
+Apply a function across a selection of columns. For use in \code{arrange()},
+\code{mutate()}, and \code{summarize()}.
 }
 \examples{
 df <- data.table(
@@ -30,11 +30,13 @@ df <- data.table(
 )
 
 df \%>\%
-  mutate.(across.(c(x, y), ~ .x * 2))
+  mutate(across(c(x, y), ~ .x * 2))
 
 df \%>\%
-  summarize.(across.(c(x, y), ~ mean(.x, na.rm = TRUE)), .by = z)
+  summarize(across(c(x, y), ~ mean(.x, na.rm = TRUE)),
+            .by = z)
 
 df \%>\%
-  arrange.(across.(c(y, z)))
+  arrange(across(c(y, z)))
 }
+\keyword{internal}

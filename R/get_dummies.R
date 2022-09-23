@@ -12,7 +12,6 @@
 #' @param drop_first TRUE/FALSE - If TRUE, the first dummy column will be dropped
 #' @param dummify_na TRUE/FALSE - If TRUE, NAs will also get dummy columns
 #'
-#' @md
 #' @export
 #'
 #' @examples
@@ -24,16 +23,28 @@
 #'
 #' # Automatically does all character/factor columns
 #' df %>%
-#'   get_dummies.()
+#'   get_dummies()
 #'
 #' df %>%
-#'   get_dummies.(cols = chr)
+#'   get_dummies(cols = chr)
 #'
 #' df %>%
-#'   get_dummies.(cols = c(chr, fct), drop_first = TRUE)
+#'   get_dummies(cols = c(chr, fct), drop_first = TRUE)
 #'
 #' df %>%
-#'   get_dummies.(prefix_sep = ".", dummify_na = FALSE)
+#'   get_dummies(prefix_sep = ".", dummify_na = FALSE)
+get_dummies <- function(.df,
+                        cols = where(~ is.character(.x) | is.factor(.x)),
+                        prefix = TRUE,
+                        prefix_sep = "_",
+                        drop_first = FALSE,
+                        dummify_na = TRUE) {
+  get_dummies.(.df, {{ cols }}, prefix, prefix_sep, drop_first, dummify_na)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit get_dummies
 get_dummies. <- function(.df,
                          cols = where(~ is.character(.x) | is.factor(.x)),
                          prefix = TRUE,
@@ -104,8 +115,6 @@ get_dummies..tidytable <- function(.df,
   .df
 }
 
-globalVariables(c("..complete", "where"))
-
 #' @export
 get_dummies..data.frame <- function(.df,
                                     cols = where(~ is.character(.x) | is.factor(.x)),
@@ -114,5 +123,9 @@ get_dummies..data.frame <- function(.df,
                                     drop_first = FALSE,
                                     dummify_na = TRUE) {
   .df <- as_tidytable(.df)
-  get_dummies.(.df, {{ cols }}, prefix, prefix_sep, drop_first, dummify_na)
+  get_dummies(.df, {{ cols }}, prefix, prefix_sep, drop_first, dummify_na)
 }
+
+globalVariables(c("..complete", "where"))
+
+

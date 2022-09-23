@@ -3,7 +3,7 @@
 #' @description
 #' Add a count column to the data frame.
 #'
-#' `df %>% add_count.(a, b)` is equivalent to using `df %>% mutate.(n = n(), .by = c(a, b))`
+#' `df %>% add_count(a, b)` is equivalent to using `df %>% mutate(n = n(), .by = c(a, b))`
 #'
 #' @param .df A data.frame or data.table
 #' @param ... Columns to group by. `tidyselect` compatible.
@@ -26,7 +26,14 @@
 #' )
 #'
 #' df %>%
-#'   add_count.(a)
+#'   add_count(a)
+add_count <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  add_count.(.df, ..., wt = {{ wt }}, sort = sort, name = name)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit add_count
 add_count. <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
   UseMethod("add_count.")
 }
@@ -41,22 +48,46 @@ add_count..tidytable <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL)
   }
 
   if (quo_is_null(wt)) {
-    .df <- mutate.(.df, !!name := n(), .by = c(!!!.by))
+    .df <- mutate(.df, !!name := n(), .by = c(!!!.by))
   } else {
-    .df <- mutate.(.df, !!name := sum(!!wt, na.rm = TRUE), .by = c(!!!.by))
+    .df <- mutate(.df, !!name := sum(!!wt, na.rm = TRUE), .by = c(!!!.by))
   }
 
   if (sort) {
-    .df <- arrange.(.df, -!!sym(name))
+    .df <- arrange(.df, -!!sym(name))
   }
 
   .df
 }
 
 #' @export
-add_count..data.frame <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  .df <- as_tidytable(.df)
-  add_count.(.df, ..., wt = {{ wt }}, sort = sort, name = name)
+add_count..grouped_tt <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  .by <- group_vars(.df)
+  out <- ungroup(.df)
+  out <- add_count(out, all_of(.by), wt = {{ wt }}, sort = sort, name = name)
+  group_by(out, all_of(.by))
 }
 
-globalVariables("n")
+#' @export
+add_count..data.frame <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  .df <- as_tidytable(.df)
+  add_count(.df, ..., wt = {{ wt }}, sort = sort, name = name)
+}
+
+#' @export
+#' @rdname add_count
+add_tally <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
+  add_tally.(.df, wt = {{ wt }}, sort = sort, name = name)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit add_count
+add_tally. <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
+  UseMethod("add_tally.")
+}
+
+#' @export
+add_tally..data.frame <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
+  add_count(.df, wt = {{ wt }}, sort = sort, name = name)
+}

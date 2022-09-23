@@ -12,13 +12,14 @@ crossing.(..., .name_repair = "check_unique")
 \item{.name_repair}{Treatment of problematic names. See \code{?vctrs::vec_as_names} for options/details}
 }
 \description{
-\code{crossing.()} is similar to \code{expand_grid.()} but de-duplicates and sorts its inputs.
+\code{crossing()} is similar to \code{expand_grid()} but de-duplicates and sorts its inputs.
 }
 \examples{
 x <- 1:2
 y <- 1:2
 
-crossing.(x, y)
+crossing(x, y)
 
-crossing.(stuff = x, y)
+crossing(stuff = x, y)
 }
+\keyword{internal}

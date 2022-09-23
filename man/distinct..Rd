@@ -27,8 +27,9 @@ df <- tidytable(
 )
 
 df \%>\%
-  distinct.()
+  distinct()
 
 df \%>\%
-  distinct.(z)
+  distinct(z)
 }
+\keyword{internal}

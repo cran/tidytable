@@ -9,12 +9,12 @@
 #'   This is an experimental argument that allows you to control which columns
 #'   from `.df` are retained in the output:
 #'
-#'   * `"all"`, the default, retains all variables.
-#'   * `"used"` keeps any variables used to make new variables; it's useful
+#'   - `"all"`, the default, retains all variables.
+#'   - `"used"` keeps any variables used to make new variables; it's useful
 #'     for checking your work as it displays inputs and outputs side-by-side.
-#'   * `"unused"` keeps only existing variables **not** used to make new
+#'   - `"unused"` keeps only existing variables _**not**_ used to make new
 #'     variables.
-#'   * `"none"`, only keeps grouping keys (like [transmute.()]).
+#'   - `"none"`, only keeps grouping keys (like [transmute()]).
 #' @param .before,.after Optionally indicate where new columns should be placed.
 #' Defaults to the right side of the data frame.
 #'
@@ -25,11 +25,23 @@
 #'
 #' # Compute the mean of x, y, z in each row
 #' df %>%
-#'   mutate_rowwise.(row_mean = mean(c(x, y, z)))
+#'   mutate_rowwise(row_mean = mean(c(x, y, z)))
 #'
-#' # Use c_across.() to more easily select many variables
+#' # Use c_across() to more easily select many variables
 #' df %>%
-#'   mutate_rowwise.(row_mean = mean(c_across.(x:z)))
+#'   mutate_rowwise(row_mean = mean(c_across(x:z)))
+mutate_rowwise <- function(.df, ...,
+                           .keep = c("all", "used", "unused", "none"),
+                           .before = NULL, .after = NULL) {
+  mutate_rowwise.(.df, ...,
+                  .keep = .keep,
+                  .before = {{ .before }},
+                  .after = {{ .after }})
+}
+
+#' @export
+#' @keywords internal
+#' @inherit mutate_rowwise
 mutate_rowwise. <- function(.df, ...,
                             .keep = c("all", "used", "unused", "none"),
                             .before = NULL, .after = NULL) {
@@ -43,15 +55,42 @@ mutate_rowwise..tidytable <- function(.df, ...,
   dots <- enquos(...)
   if (length(dots) == 0) return(.df)
 
-  .df <- mutate.(.df, .rowwise_id = .I)
+  .df <- mutate(.df, .rowwise_id = .I)
 
-  .df <- mutate.(.df, !!!dots,
-                 .by = .rowwise_id,
+  .df <- mutate(.df, !!!dots,
+                .by = .rowwise_id,
+                .keep = .keep,
+                .before = {{ .before }},
+                .after = {{ .after }})
+
+  mutate(.df, .rowwise_id = NULL)
+}
+
+#' @export
+mutate_rowwise..grouped_tt <- function(.df, ...,
+                                      .keep = c("all", "used", "unused", "none"),
+                                      .before = NULL, .after = NULL) {
+  warn("Using `mutate_rowwise()` on a grouped tidytable.
+       The output will be ungrouped.")
+  out <- ungroup(.df)
+  mutate_rowwise(out, ...,
                  .keep = .keep,
                  .before = {{ .before }},
                  .after = {{ .after }})
+}
 
-  mutate.(.df, .rowwise_id = NULL)
+#' @export
+mutate_rowwise..rowwise_tt <- function(.df, ...,
+                                       .keep = c("all", "used", "unused", "none"),
+                                       .before = NULL, .after = NULL) {
+  warn("Using `mutate_rowwise()` on a rowwise tidytable.
+       You can use `mutate()` directly.")
+  out <- ungroup(.df)
+  out <- mutate_rowwise(out, ...,
+                        .keep = .keep,
+                        .before = {{ .before }},
+                        .after = {{ .after }})
+  rowwise(out)
 }
 
 #' @export
@@ -59,7 +98,10 @@ mutate_rowwise..data.frame <- function(.df, ...,
                                        .keep = c("all", "used", "unused", "none"),
                                        .before = NULL, .after = NULL) {
   .df <- as_tidytable(.df)
-  mutate_rowwise.(.df, ..., .keep = .keep, .before = {{ .before }}, .after = {{ .after }})
+  mutate_rowwise(.df, ...,
+                 .keep = .keep,
+                 .before = {{ .before }},
+                 .after = {{ .after }})
 }
 
 globalVariables(".rowwise_id")

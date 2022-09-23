@@ -21,5 +21,6 @@ Converts named and unnamed vectors to a data.table/tidytable.
 vec <- 1:3
 names(vec) <- letters[1:3]
 
-enframe.(vec)
+enframe(vec)
 }
+\keyword{internal}

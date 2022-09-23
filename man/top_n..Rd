@@ -26,8 +26,9 @@ df <- data.table(
 )
 
 df \%>\%
-  top_n.(2, wt = y)
+  top_n(2, wt = y)
 
 df \%>\%
-  top_n.(2, wt = y, .by = z)
+  top_n(2, wt = y, .by = z)
 }
+\keyword{internal}

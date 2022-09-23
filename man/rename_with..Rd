@@ -27,11 +27,12 @@ df <- data.table(
 )
 
 df \%>\%
-  rename_with.(toupper)
+  rename_with(toupper)
 
 df \%>\%
-  rename_with.(~ toupper(.x))
+  rename_with(~ toupper(.x))
 
 df \%>\%
-  rename_with.(~ toupper(.x), .cols = c(x, double_x))
+  rename_with(~ toupper(.x), .cols = c(x, double_x))
 }
+\keyword{internal}

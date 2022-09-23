@@ -10,12 +10,13 @@ c_across.(cols = everything())
 \item{cols}{Columns to transform.}
 }
 \description{
-\code{c_across.()} works inside of \code{mutate_rowwise.()}. It uses tidyselect so
+\code{c_across()} works inside of \code{mutate_rowwise()}. It uses tidyselect so
 you can easily select multiple variables.
 }
 \examples{
 df <- data.table(x = runif(6), y = runif(6), z = runif(6))
 
 df \%>\%
-  mutate_rowwise.(row_mean = mean(c_across.(x:z)))
+  mutate_rowwise(row_mean = mean(c_across(x:z)))
 }
+\keyword{internal}

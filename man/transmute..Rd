@@ -14,7 +14,7 @@ transmute.(.df, ..., .by = NULL)
 \item{.by}{Columns to group by}
 }
 \description{
-Unlike \code{mutate.()}, \code{transmute.()} keeps only the variables that you create
+Unlike \code{mutate()}, \code{transmute()} keeps only the variables that you create
 }
 \examples{
 df <- data.table(
@@ -24,5 +24,6 @@ df <- data.table(
 )
 
 df \%>\%
-  transmute.(double_a = a * 2)
+  transmute(double_a = a * 2)
 }
+\keyword{internal}

@@ -12,8 +12,8 @@ unnest_longer.(
   indices_include = NULL,
   names_repair = "check_unique",
   simplify = NULL,
-  ptype = list(),
-  transform = list()
+  ptype = NULL,
+  transform = NULL
 )
 }
 \arguments{
@@ -45,5 +45,6 @@ df <- tidytable(
   y = list(0, 1:3, 4:5)
 )
 
-df \%>\% unnest_longer.(y)
+df \%>\% unnest_longer(y)
 }
+\keyword{internal}

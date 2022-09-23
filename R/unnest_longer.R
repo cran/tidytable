@@ -22,20 +22,33 @@
 #'   y = list(0, 1:3, 4:5)
 #' )
 #'
-#' df %>% unnest_longer.(y)
+#' df %>% unnest_longer(y)
+unnest_longer <- function(.df, col, values_to = NULL, indices_to = NULL,
+                          indices_include = NULL, names_repair = "check_unique",
+                          simplify = NULL, ptype = NULL, transform = NULL) {
+  unnest_longer.(
+    .df, col = {{ col }}, values_to = values_to, indices_to = indices_to,
+    indices_include = indices_include, names_repair = names_repair, simplify = simplify,
+    ptype = ptype, transform = transform
+  )
+}
+
+#' @export
+#' @keywords internal
+#' @inherit unnest_longer
 unnest_longer. <- function(.df, col, values_to = NULL, indices_to = NULL,
-                           indices_include = NULL, names_repair = "check_unique",
-                           simplify = NULL, ptype = list(), transform = list()) {
+                          indices_include = NULL, names_repair = "check_unique",
+                          simplify = NULL, ptype = NULL, transform = NULL) {
   UseMethod("unnest_longer.")
 }
 
 #' @export
 unnest_longer..tidytable <- function(.df, col, values_to = NULL, indices_to = NULL,
                                      indices_include = NULL, names_repair = "check_unique",
-                                     simplify = NULL, ptype = list(), transform = list()) {
+                                     simplify = NULL, ptype = NULL, transform = NULL) {
   .col <- enquo(col)
 
-  x <- pull.(.df, !!.col)
+  x <- pull(.df, !!.col)
 
   if (!is_simple_vector(x[[1]])) {
     abort("Only vectors are currently supported")
@@ -47,31 +60,30 @@ unnest_longer..tidytable <- function(.df, col, values_to = NULL, indices_to = NU
 
   .col_name <- as_name(.col)
   .values_to <- sym(values_to %||% .col_name)
-  .indices_include <- indices_include %||% any(map_lgl.(x, ~ any(have_name(.x))))
+  .indices_include <- indices_include %||% any(map_lgl(x, ~ any(have_name(.x))))
 
   if (.indices_include || !is.null(indices_to)) {
     .indices_to <- sym(indices_to %||% paste0(.col_name, "_id"))
 
-    .df <- mutate.(.df, !!.indices_to := map.(!!.col, ~ names(.x) %||% seq_along(.x)))
+    .df <- mutate(.df, !!.indices_to := map(!!.col, ~ names(.x) %||% seq_along(.x)))
   } else {
     .indices_to <- character()
   }
 
   if (!is.null(values_to)) {
-    .df <- rename.(.df, !!.values_to := !!.col)
+    .df <- rename(.df, !!.values_to := !!.col)
   }
 
   to_vec <- as.character(c(.values_to, .indices_to))
 
-  .df <- unnest.(
-    .df, !!!syms(to_vec),
+  .df <- unnest(
+    .df, all_of(to_vec),
     names_repair = names_repair,
     keep_empty = TRUE,
     .drop = FALSE
   )
 
-  .df <- change_types(.df, to_vec, ptype, "ptypes")
-  .df <- change_types(.df, to_vec, transform, "transform")
+  .df <- change_types(.df, to_vec, ptype, transform)
 
   .df
 }
@@ -81,9 +93,10 @@ unnest_longer..data.frame <- function(.df, col, values_to = NULL, indices_to = N
                                       indices_include = NULL, names_repair = "check_unique",
                                       simplify = NULL, ptype = list(), transform = list()) {
   .df <- as_tidytable(.df)
-  unnest_longer.(
+  unnest_longer(
     .df, col = {{ col }}, values_to = values_to, indices_to = indices_to,
     indices_include = indices_include, names_repair = names_repair, simplify = simplify,
     ptype = ptype, transform = transform
   )
 }
+

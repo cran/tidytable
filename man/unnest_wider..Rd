@@ -10,8 +10,8 @@ unnest_wider.(
   names_sep = NULL,
   simplify = NULL,
   names_repair = "check_unique",
-  ptype = list(),
-  transform = list()
+  ptype = NULL,
+  transform = NULL
 )
 }
 \arguments{
@@ -41,8 +41,9 @@ df <- tidytable(
 )
 
 # Automatically creates names
-df \%>\% unnest_wider.(y)
+df \%>\% unnest_wider(y)
 
 # But you can provide names_sep for increased naming control
-df \%>\% unnest_wider.(y, names_sep = "_")
+df \%>\% unnest_wider(y, names_sep = "_")
 }
+\keyword{internal}

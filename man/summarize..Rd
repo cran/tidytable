@@ -2,12 +2,16 @@
 % Please edit documentation in R/summarize.R
 \name{summarize.}
 \alias{summarize.}
-\alias{summarise.}
 \title{Aggregate data using summary statistics}
 \usage{
-summarize.(.df, ..., .by = NULL, .sort = TRUE)
-
-summarise.(.df, ..., .by = NULL, .sort = TRUE)
+summarize.(
+  .df,
+  ...,
+  .by = NULL,
+  .sort = TRUE,
+  .groups = "drop_last",
+  .unpack = FALSE
+)
 }
 \arguments{
 \item{.df}{A data.frame or data.table}
@@ -26,8 +30,18 @@ summarise.(.df, ..., .by = NULL, .sort = TRUE)
 }
 }}
 
-\item{.sort}{\emph{experimental}: Default TRUE.
+\item{.sort}{\emph{experimental}: Default \code{TRUE}.
 If FALSE the original order of the grouping variables will be preserved.}
+
+\item{.groups}{Grouping structure of the result
+\itemize{
+\item "drop_last": Drop the last level of grouping
+\item "drop": Drop all groups
+\item "keep": Keep all groups
+}}
+
+\item{.unpack}{\emph{experimental}: Default \code{FALSE}. Should unnamed data frame inputs be unpacked.
+The user must opt in to this option as it can lead to a reduction in performance.}
 }
 \description{
 Aggregate data using summary statistics such as mean or median. Can be calculated by group.
@@ -41,11 +55,12 @@ df <- data.table(
 )
 
 df \%>\%
-  summarize.(avg_a = mean(a),
-             max_b = max(b),
-             .by = c)
+  summarize(avg_a = mean(a),
+            max_b = max(b),
+            .by = c)
 
 df \%>\%
-  summarize.(avg_a = mean(a),
-             .by = c(c, d))
+  summarize(avg_a = mean(a),
+            .by = c(c, d))
 }
+\keyword{internal}

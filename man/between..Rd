@@ -12,7 +12,7 @@ between.(x, left, right)
 \item{left, right}{Boundary values}
 }
 \description{
-\code{between.()} utilizes \code{data.table::between()} in the background
+\code{between()} utilizes \code{data.table::between()} in the background
 }
 \examples{
 df <- data.table(
@@ -20,14 +20,15 @@ df <- data.table(
   y = 1:5
 )
 
-# Typically used in a filter.()
+# Typically used in a filter()
 df \%>\%
-  filter.(between.(x, 2, 4))
+  filter(between(x, 2, 4))
 
 df \%>\%
-  filter.(x \%>\% between.(2, 4))
+  filter(x \%>\% between(2, 4))
 
 # Can also use the \%between\% operator
 df \%>\%
-  filter.(x \%between\% c(2, 4))
+  filter(x \%between\% c(2, 4))
 }
+\keyword{internal}

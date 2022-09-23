@@ -24,8 +24,9 @@ df <- tidytable(
 )
 
 df \%>\%
-  filter.(a >= 2, b >= 4)
+  filter(a >= 2, b >= 4)
 
 df \%>\%
-  filter.(b <= mean(b), .by = c)
+  filter(b <= mean(b), .by = c)
 }
+\keyword{internal}

@@ -20,10 +20,17 @@
 #' )
 #'
 #' df %>%
-#'   distinct.()
+#'   distinct()
 #'
 #' df %>%
-#'   distinct.(z)
+#'   distinct(z)
+distinct <- function(.df, ..., .keep_all = FALSE) {
+  distinct.(.df, ..., .keep_all = .keep_all)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit distinct
 distinct. <- function(.df, ..., .keep_all = FALSE) {
   UseMethod("distinct.")
 }
@@ -34,7 +41,7 @@ distinct..tidytable <- function(.df, ..., .keep_all = FALSE) {
 
   dots <- enquos(...)
 
-  across_check(dots)
+  check_across(dots, "distinct")
 
   if (length(dots) == 0) {
     out <- unique(.df)
@@ -45,15 +52,15 @@ distinct..tidytable <- function(.df, ..., .keep_all = FALSE) {
 
     if (!.keep_all) {
       cols_keep <- unname(cols)
-      out <- select.(out, any_of(cols_keep))
+      out <- select(out, any_of(cols_keep))
     }
 
-    named_bool <- have_name(dots)
+    .is_named <- have_name(dots)
 
-    if (any(named_bool)) {
-      named_dots <- dots[named_bool]
+    if (any(.is_named)) {
+      named_dots <- dots[.is_named]
 
-      out <- rename.(out, !!!named_dots)
+      out <- rename(out, !!!named_dots)
     }
   }
 
@@ -63,20 +70,5 @@ distinct..tidytable <- function(.df, ..., .keep_all = FALSE) {
 #' @export
 distinct..data.frame <- function(.df, ..., .keep_all = FALSE) {
   .df <- as_tidytable(.df)
-  distinct.(.df, ..., .keep_all = .keep_all)
-}
-
-across_check <- function(dots) {
-  use_across <- map_lgl.(dots, quo_is_call, "across.")
-
-  if (any(use_across)) {
-    abort(
-      paste0(
-        c("across.() is unnecessary in distinct.()",
-        "Please directly use tidyselect:",
-        "Ex: df %>% distinct.(starts_with('x'))"),
-        collapse = "\n"
-      )
-    )
-  }
+  distinct(.df, ..., .keep_all = .keep_all)
 }

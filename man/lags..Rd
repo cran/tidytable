@@ -2,12 +2,9 @@
 % Please edit documentation in R/lag-lead.R
 \name{lags.}
 \alias{lags.}
-\alias{leads.}
 \title{Get lagging or leading values}
 \usage{
 lags.(x, n = 1L, default = NA)
-
-leads.(x, n = 1L, default = NA)
 }
 \arguments{
 \item{x}{a vector of values}
@@ -23,13 +20,14 @@ Useful for comparing values behind or ahead of the current values.
 \examples{
 x <- 1:5
 
-leads.(x, 1)
-lags.(x, 1)
+lag(x, 1)
+lead(x, 1)
 
-# Also works inside of `mutate.()`
+# Also works inside of `mutate()`
 df <- tidytable(x = 1:5)
 
 df \%>\%
-  mutate.(lag_x = lags.(x))
+  mutate(lag_x = lag(x))
 
 }
+\keyword{internal}

@@ -13,9 +13,6 @@ arrange.(.df, ...)
 }
 \description{
 Order rows in ascending or descending order.
-
-Note: \code{data.table} orders character columns slightly differently than \code{dplyr::arrange()} by
-ordering in the "C-locale". See \code{?data.table::setorder} for more details.
 }
 \examples{
 df <- data.table(
@@ -25,8 +22,9 @@ df <- data.table(
 )
 
 df \%>\%
-  arrange.(c, -a)
+  arrange(c, -a)
 
 df \%>\%
-  arrange.(c, desc(a))
+  arrange(c, desc(a))
 }
+\keyword{internal}

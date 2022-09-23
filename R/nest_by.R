@@ -1,7 +1,9 @@
 #' Nest data.tables
 #'
 #' @description
-#' Nest data.tables by group
+#' Nest data.tables by group.
+#'
+#' Note: `nest_by()` _does not_ return a rowwise tidytable.
 #'
 #' @param .df A data.frame or data.table
 #' @param ... Columns to group by. If empty nests the entire data.table.
@@ -10,7 +12,6 @@
 #' @param .keep Should the grouping columns be kept in the list column.
 #'
 #' @export
-#' @md
 #'
 #' @examples
 #' df <- data.table(
@@ -21,16 +22,23 @@
 #' )
 #'
 #' df %>%
-#'   nest_by.()
+#'   nest_by()
 #'
 #' df %>%
-#'   nest_by.(c, d)
+#'   nest_by(c, d)
 #'
 #' df %>%
-#'   nest_by.(where(is.character))
+#'   nest_by(where(is.character))
 #'
 #' df %>%
-#'   nest_by.(c, d, .keep = TRUE)
+#'   nest_by(c, d, .keep = TRUE)
+nest_by <- function(.df, ..., .key = "data", .keep = FALSE) {
+  nest_by.(.df, ..., .key = .key, .keep = .keep)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit nest_by
 nest_by. <- function(.df, ..., .key = "data", .keep = FALSE) {
   UseMethod("nest_by.")
 }
@@ -41,22 +49,31 @@ nest_by..tidytable <- function(.df, ..., .key = "data", .keep = FALSE) {
   vec_assert(.keep, logical(), 1)
 
   if (.keep) {
-    split_list <- group_split.(.df, ..., .keep = .keep)
+    split_list <- group_split(.df, ..., .keep = .keep)
 
-    .df <- distinct.(.df, ...)
+    .df <- distinct(.df, ...)
 
-    .df <- mutate.(.df, !!.key := .env$split_list)
+    .df <- mutate(.df, !!.key := .env$split_list)
   } else {
     .by <- enquos(...)
 
-    .df <- summarize.(.df, !!.key := list(.SD), .by = c(!!!.by))
+    .df <- summarize(.df, !!.key := list(.SD), .by = c(!!!.by))
   }
 
   .df
 }
 
 #' @export
+nest_by..grouped_tt <- function(.df, ..., .key = "data", .keep = FALSE) {
+  .by <- group_vars(.df)
+  out <- ungroup(.df)
+  out <- nest_by(.df, all_of(.by), .key = .key, .keep = .keep)
+  group_by(out, all_of(.by))
+}
+
+#' @export
 nest_by..data.frame <- function(.df, ..., .key = "data", .keep = FALSE) {
   .df <- as_tidytable(.df)
-  nest_by.(.df, ..., .key = .key, .keep = .keep)
+  nest_by(.df, ..., .key = .key, .keep = .keep)
 }
+

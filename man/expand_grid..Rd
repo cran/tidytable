@@ -18,7 +18,8 @@ Create a data.table from all combinations of inputs
 x <- 1:2
 y <- 1:2
 
-expand_grid.(x, y)
+expand_grid(x, y)
 
-expand_grid.(stuff = x, y)
+expand_grid(stuff = x, y)
 }
+\keyword{internal}

@@ -21,7 +21,8 @@ a vector as the \code{default} argument.
 df <- tidytable(x = 1:10)
 
 df \%>\%
-  mutate.(case_x = case.(x < 5, 1,
+  mutate(case_x = case(x < 5, 1,
                          x < 7, 2,
                          default = 3))
 }
+\keyword{internal}

@@ -16,5 +16,6 @@ This is a faster version of \code{length(unique(x))} that calls \code{data.table
 }
 \examples{
 x <- sample(1:10, 1e5, rep = TRUE)
-n_distinct.(x)
+n_distinct(x)
 }
+\keyword{internal}

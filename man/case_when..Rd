@@ -26,7 +26,8 @@ in the background for improved performance.
 df <- tidytable(x = 1:10)
 
 df \%>\%
-  mutate.(case_x = case_when.(x < 5 ~ 1,
-                              x < 7 ~ 2,
-                              TRUE ~ 3))
+  mutate(case_x = case_when(x < 5 ~ 1,
+                            x < 7 ~ 2,
+                            TRUE ~ 3))
 }
+\keyword{internal}

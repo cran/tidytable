@@ -19,23 +19,30 @@
 #' )
 #'
 #' df %>%
-#'   group_split.(c, d)
+#'   group_split(c, d)
 #'
 #' df %>%
-#'   group_split.(c, d, .keep = FALSE)
+#'   group_split(c, d, .keep = FALSE)
 #'
 #' df %>%
-#'   group_split.(c, d, .named = TRUE)
+#'   group_split(c, d, .named = TRUE)
+group_split <- function(.df, ..., .keep = TRUE, .named = FALSE) {
+  group_split.(.df, ..., .keep = .keep, .named = .named)
+}
+
+#' @export
+#' @keywords internal
+#' @inherit group_split
 group_split. <- function(.df, ..., .keep = TRUE, .named = FALSE) {
   UseMethod("group_split.")
 }
 
 #' @export
 group_split..tidytable <- function(.df, ..., .keep = TRUE, .named = FALSE) {
-  by <- select.(.df, ...)
+  by <- select(.df, ...)
 
   if (is_false(.keep)) {
-    .df <- select.(.df, -all_of(names(by)))
+    .df <- select(.df, -all_of(names(by)))
   }
 
   split <- vec_split(.df, by)
@@ -51,8 +58,16 @@ group_split..tidytable <- function(.df, ..., .keep = TRUE, .named = FALSE) {
 }
 
 #' @export
+group_split..grouped_tt <- function(.df, ..., .keep = TRUE, .named = FALSE) {
+  .by <- group_vars(.df)
+  out <- ungroup(.df)
+  group_split(out, all_of(.by), .keep = .keep, .named = .named)
+}
+
+#' @export
 group_split..data.frame <- function(.df, ..., .keep = TRUE, .named = FALSE) {
   .df <- as_tidytable(.df)
-  group_split.(.df, ..., .keep = .keep, .named = .named)
+  group_split(.df, ..., .keep = .keep, .named = .named)
 }
+
 

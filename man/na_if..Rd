@@ -2,12 +2,12 @@
 % Please edit documentation in R/na_if.R
 \name{na_if.}
 \alias{na_if.}
-\title{Convert values to NA}
+\title{Convert values to \code{NA}}
 \usage{
 na_if.(x, y)
 }
 \arguments{
-\item{x}{An R object}
+\item{x}{A vector}
 
 \item{y}{Value(s) to replace with \code{NA}}
 }
@@ -16,5 +16,6 @@ Convert values to \code{NA}.
 }
 \examples{
 vec <- 1:3
-na_if.(vec, 3)
+na_if(vec, 3)
 }
+\keyword{internal}

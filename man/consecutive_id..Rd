@@ -14,5 +14,6 @@ Generate a unique id for runs of consecutive values
 }
 \examples{
 x <- c(1, 1, 2, 2, 1, 1)
-consecutive_id.(x)
+consecutive_id(x)
 }
+\keyword{internal}

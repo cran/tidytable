@@ -26,7 +26,8 @@ df <- data.table(
   z = c("1", "2,3,4", "5,6")
 )
 
-separate_rows.(df, y, z)
+separate_rows(df, y, z)
 
-separate_rows.(df, y, z, convert = TRUE)
+separate_rows(df, y, z, convert = TRUE)
 }
+\keyword{internal}

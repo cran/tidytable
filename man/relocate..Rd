@@ -27,11 +27,12 @@ df <- data.table(
 )
 
 df \%>\%
-  relocate.(c, .before = b)
+  relocate(c, .before = b)
 
 df \%>\%
-  relocate.(a, b, .after = c)
+  relocate(a, b, .after = c)
 
 df \%>\%
-  relocate.(where(is.numeric), .after = c)
+  relocate(where(is.numeric), .after = c)
 }
+\keyword{internal}
