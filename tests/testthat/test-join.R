@@ -23,6 +23,12 @@ test_that("joins work", {
   expect_equal(out$b, c(1:3, NA))
 })
 
+test_that("error with no common vars", {
+  df1 <- data.table(a = 1:3)
+  df2 <- data.table(b = 1:3)
+  expect_error(left_join(df1, df2))
+})
+
 test_that("works with dot", {
   df1 <- data.table(a = 1:3, b = 1:3)
   df2 <- data.table(a = 4:1, c = 1, d = 2)
@@ -310,4 +316,54 @@ test_that("when keep = TRUE, inner_join() preserves both sets of keys", {
   out <- inner_join(df1, df2, by = c("a"), keep = TRUE)
   expect_equal(out$a.x, c(3))
   expect_equal(out$a.y, c(3))
+})
+
+# nest_join ----------------------------------------------------------------
+
+test_that("nest_join works",{
+  df1 <- tidytable(x = c(1, 2), y = c(2, 3))
+  df2 <- tidytable(x = c(1, 1), z = c(2, 3))
+  out <- nest_join(df1, df2, by = "x")
+
+  expect_named(out, c("x", "y", "df2"))
+  expect_true(is.list(out$df2))
+  expect_true(is_tidytable(out$df2[[1]]))
+  expect_equal(nrow(out$df2[[2]]), 0)
+})
+
+# test_that("nest_join respects types of y (#6295)",{
+#   df1 <- tidytable(x = c(1, 2), y = c(2, 3))
+#   df2 <- rowwise(tidytable(x = c(1, 1), z = c(2, 3)))
+#   out <- nest_join(df1, df2, by = "x")
+#
+#   expect_s3_class(out$df2[[1]], "rowwise_df")
+# })
+
+test_that("nest_join computes common columns", {
+  df1 <- tidytable(x = c(1, 2), y = c(2, 3))
+  df2 <- tidytable(x = c(1, 3), z = c(2, 3))
+  expect_named(nest_join(df1, df2), c("x", "y", "df2"))
+})
+
+test_that("nest_join handles multiple matches in x", {
+  df1 <- tidytable(x = c(1, 1))
+  df2 <- tidytable(x = 1, y = 1:2)
+
+  out <- nest_join(df1, df2, by = "x")
+  expect_equal(out$df2[[1]], out$df2[[2]])
+})
+
+# cross join ----------------------------------------------------------------
+test_that("cross_join works",{
+  df1 <- tidytable(a = c("a", "b"))
+  df2 <- tidytable(b = c("c", "d"))
+  cross_join_df <- tidytable(a = vctrs::vec_rep_each(c("a", "b"), 2),
+                             b = vctrs::vec_rep(c("c", "d"), 2))
+
+  expect_equal(left_join(df1, df2, character()), cross_join_df)
+  expect_equal(right_join(df1, df2, character()), cross_join_df)
+  expect_equal(inner_join(df1, df2, character()), cross_join_df)
+  expect_equal(full_join(df1, df2, character()), cross_join_df)
+  expect_equal(anti_join(df1, df2, character()), slice(df1, 0))
+  expect_equal(semi_join(df1, df2, character()), df1)
 })

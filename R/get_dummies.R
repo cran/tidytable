@@ -80,35 +80,35 @@ get_dummies..tidytable <- function(.df,
     len <- length(unique_vals)
 
     # Due to above f_sort NA will be the last value if it exists
-    any_na <- vec_equal_na(unique_vals[len])
+    any_na <- vec_detect_missing(unique_vals[len])
 
     if (any_na) {
       unique_vals <- unique_vals[-len]
     }
 
     if (prefix) {
-      not_na_cols <- paste(col_name, unique_vals, sep = prefix_sep)
-      na_col <- paste(col_name, "NA", sep = prefix_sep)
+      cols_complete <- paste(col_name, unique_vals, sep = prefix_sep)
+      col_na <- paste(col_name, "NA", sep = prefix_sep)
     } else {
-      not_na_cols <- as.character(unique_vals)
-      na_col <- "NA"
+      cols_complete <- as.character(unique_vals)
+      col_na <- "NA"
     }
 
     if (any_na) {
-      complete <- vec_detect_complete(.df[[col_name]])
+      is_complete <- vec_detect_complete(.df[[col_name]])
       .df <- dt_j(
         .df,
-        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col & ..complete))
+        (cols_complete) := lapply(unique_vals, function(.x) as.integer(.x == !!col & ..is_complete))
       )
     } else {
       .df <- dt_j(
         .df,
-        (not_na_cols) := lapply(unique_vals, function(.x) as.integer(.x == !!col))
+        (cols_complete) := lapply(unique_vals, function(.x) as.integer(.x == !!col))
       )
     }
 
     if (dummify_na && any_na) {
-      .df <- dt_j(.df, (na_col) := as.integer(!..complete))
+      .df <- dt_j(.df, (col_na) := as.integer(!..is_complete))
     }
   }
 
@@ -126,6 +126,6 @@ get_dummies..data.frame <- function(.df,
   get_dummies(.df, {{ cols }}, prefix, prefix_sep, drop_first, dummify_na)
 }
 
-globalVariables(c("..complete", "where"))
+globalVariables("..is_complete")
 
 

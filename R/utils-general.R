@@ -158,7 +158,7 @@ check_across <- function(dots, .fn) {
 deprecate_old_across <- function(fn) {
   msg <- glue("`{fn}_across.()` is defunct as of v0.8.1 (Aug 2022).
               It has been deprecated with warnings since v0.6.4 (Jul 2021).
-              Please use `{fn}.(across.())`")
+              Please use `{fn}(across())`")
 
   stop_defunct(msg)
 }
@@ -195,6 +195,15 @@ change_types <- function(.df, .cols, .ptypes = NULL, .transform = NULL) {
 }
 
 # For internal testing
-sample. <- function(x, size, replace = TRUE) {
-  sample(x, size, replace)
+vec_sample <- function(x, times = vec_size(x), replace = NULL) {
+  if (is.null(replace)) {
+    if (vec_size(x) == times) {
+      replace <- FALSE
+    } else {
+      replace <- TRUE
+    }
+  }
+  locs <- vec_seq_along(x)
+  locs <- sample(locs, times, replace)
+  vec_slice(x, locs)
 }
