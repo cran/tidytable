@@ -1,15 +1,15 @@
-# These functions are for internal use only
+# stringr utils - These functions are for internal use only
 
 str_c <- function(..., sep = "", collapse = NULL) {
   paste(..., sep = sep, collapse = collapse)
 }
 
-str_detect <- function(string, pattern, fixed = FALSE, perl = FALSE) {
-  grepl(pattern, string, fixed = fixed, perl = perl)
+str_flatten <- function(string, collapse = "") {
+  str_c(string, collapse = collapse)
 }
 
-str_ends <- function(string, pattern) {
-  endsWith(string, pattern)
+str_detect <- function(string, pattern, fixed = FALSE, perl = FALSE) {
+  grepl(pattern, string, fixed = fixed, perl = perl)
 }
 
 str_extract <- function(x, pattern, fixed = FALSE, perl = FALSE) {
@@ -45,9 +45,5 @@ str_replace_all <- function(string, pattern, replacement, fixed = FALSE, perl = 
   }
 
   string
-}
-
-str_starts <- function(string, pattern) {
-  startsWith(string, pattern)
 }
 

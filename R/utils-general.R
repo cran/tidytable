@@ -1,17 +1,19 @@
 # dt starting with the j position
 dt_j <- function(.df, j, ...) {
   j <- enquo(j)
-  dt(.df, , !!j, ...)
+  i <- new_quosure(expr(), get_env(j))
+  dt(.df, !!i, !!j, ...)
 }
 
 # Create a call to `[.data.table` (j position)
 call2_j <- function(.df, j = NULL, .by = NULL, .keyby = FALSE, ...) {
+  .df <- enquo(.df)
   if (length(.by) == 0) {
-    dt_expr <- call2("[", enquo(.df), , j, ...)
+    dt_expr <- call2("[", .df, expr(), j, ...)
   } else if (.keyby) {
-    dt_expr <- call2("[", enquo(.df), , j, keyby = .by, ...)
+    dt_expr <- call2("[", .df, expr(), j, keyby = .by, ...)
   } else {
-    dt_expr <- call2("[", enquo(.df), , j, by = .by, ...)
+    dt_expr <- call2("[", .df, expr(), j, by = .by, ...)
   }
 
   if (is_call(j, c(":=", "let"))) {
@@ -31,8 +33,8 @@ call2_i <- function(.df, i = NULL, .by = NULL) {
   }
 }
 
-# Uses fast by trick for i position using .I
-# For use in slice/filter
+# Uses fast `by` trick for i position using .I
+#   See: https://stackoverflow.com/a/16574176/13254470
 call2_i_by <- function(.df, i, .by) {
   j <- expr(.I[!!i])
   dt_expr <- call2_j(.df, j, .by)
@@ -67,6 +69,16 @@ df_name_repair <- function(.df, .name_repair = "unique") {
   df_set_names(.df, new_names)
 }
 
+# Drop the key from a keyed data.table
+remove_key <- function(.df) {
+  if (haskey(.df)) {
+    .df <- fast_copy(.df)
+    setkey(.df, NULL)
+    .df
+  }
+  .df
+}
+
 check_by <- function(.by) {
   .by <- enquo(.by)
   if (!quo_is_null(.by)) {
@@ -77,39 +89,37 @@ check_by <- function(.by) {
 
 # Extract environment from quosures to build the evaluation environment
 get_dt_env <- function(x, ...) {
-  .default <- caller_env(2)
+  default <- caller_env(2)
+
   if (length(x) == 0) {
-    dt_env <- .default
+    dt_env <- default
   } else if (is_quosures(x)) {
     envs <- map(x, get_env)
     non_empty <- map_lgl(envs, ~ !identical(.x, empty_env()))
     if (any(non_empty)) {
       dt_env <- envs[non_empty][[1]]
     } else {
-      dt_env <- .default
+      dt_env <- default
     }
   } else {
     dt_env <- get_env(x)
     if (identical(dt_env, empty_env())) {
-      dt_env <- .default
+      dt_env <- default
     }
   }
 
   env(dt_env, ...)
 }
 
-# Set the class attribute of an object
-# Defaults to a basic tidytable
-set_class <- function(x, .class = c("tidytable", "data.table", "data.frame")) {
-  class(x) <- .class
-  x
+tidytable_class <- function() {
+  c("tidytable", "data.table", "data.frame")
 }
 
 # radix sort
-# proxy for data.table::fsort since negative values aren't supported, #282
+#   Proxy for data.table::fsort since negative values aren't supported, #282
+#   Can switch to data.table::fsort once negative doubles are handled
+#   See: https://github.com/Rdatatable/data.table/issues/5051
 f_sort <- function(x) {
-  # Can switch to data.table::fsort once negative doubles are handled
-  # See: https://github.com/Rdatatable/data.table/issues/5051
   if (is.character(x)) {
     suppressWarnings(
       fsort(x, na.last = TRUE)
@@ -135,22 +145,23 @@ call_reduce <- function(x, fun) {
 }
 
 # Restore user defined attributes
+#   Ensures auto-index is removed
+#   See: https://github.com/Rdatatable/data.table/issues/5042
 tidytable_restore <- function(x, to) {
-  # Make sure auto-index is reset since vec_restore reapplies the original index
-  # https://github.com/Rdatatable/data.table/issues/5042
-  attr(to, "index") <- NULL
+  to <- set_attr(to, "index", NULL)
   vec_restore(x, to)
 }
 
 check_across <- function(dots, .fn) {
-  use_across <- map_lgl(dots, quo_is_call, c("across", "across."))
+  uses_across <- any(map_lgl(dots, quo_is_call, c("across", "across.", "pick")))
 
-  if (any(use_across)) {
+  if (uses_across) {
     abort(
       glue(
-      "`across()` is unnecessary in `{.fn}()`.
-      Please directly use tidyselect.
-      Ex: df %>% {.fn}(where(is.numeric))")
+        "`across()`/`pick()` are unnecessary in `{.fn}()`.
+         Please directly use tidyselect.
+         Ex: df %>% {.fn}(where(is.numeric))"
+      )
     )
   }
 }
@@ -159,12 +170,11 @@ deprecate_old_across <- function(fn) {
   msg <- glue("`{fn}_across.()` is defunct as of v0.8.1 (Aug 2022).
               It has been deprecated with warnings since v0.6.4 (Jul 2021).
               Please use `{fn}(across())`")
-
-  stop_defunct(msg)
+  abort(msg)
 }
 
 # Does type changes with ptype & transform logic
-# For use in pivot_longer/unnest_longer/unnest_wider
+#   For use in pivot_longer/unnest_longer/unnest_wider
 change_types <- function(.df, .cols, .ptypes = NULL, .transform = NULL) {
   if (!is.null(.ptypes)) {
     if (!vec_is_list(.ptypes)) {
