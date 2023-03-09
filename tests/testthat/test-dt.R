@@ -16,6 +16,13 @@ test_that("doesn't modify by reference", {
   df %>%
     dt(, c("x", "y") := NULL)
 
+  df %>%
+    dt(, ':='(x = x * 2))
+
+  col <- quo(x)
+  df %>%
+    dt(, ':='(!!col := !!col * 2))
+
   expect_named(df, c("x", "y", "z"))
   expect_equal(df$x, 1:3)
 })
@@ -115,12 +122,14 @@ test_that("doesn't work on list input", {
   expect_error(df %>% dt(, x := 1))
 })
 
-test_that("Automatically ungroups grouped_tt", {
-  df <- tidytable(x = 1:3, y = c("a", "a", "b")) %>%
-    group_by(y)
+test_that("let works", {
+  df <- tidytable(x = c(1, 1, 1), y = 1:3)
+
+  col <- quo(x)
+
   res <- df %>%
-    dt(x == 1) %>%
-    suppressWarnings()
-  expect_false(is_grouped_df(res))
-  expect_equal(res$x, 1)
+    dt(, let(double_x = x * 2, y = NULL))
+
+  expect_named(res, c("x", "double_x"))
+  expect_equal(res$double_x, c(2, 2, 2))
 })

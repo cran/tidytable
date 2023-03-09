@@ -51,30 +51,21 @@
 #'   group_by(x) %>%
 #'   tally()
 count <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  count.(.df, ..., wt = {{ wt }}, sort = sort, name = name)
+  .df <- .df_as_tidytable(.df)
+
+  if (is_ungrouped(.df)) {
+    .by <- quo(c(...))
+    count_tally(.df, {{ wt }}, sort, name, .by = !!.by, .groups = "keep")
+  } else {
+    count_tally(.df, {{ wt }}, sort, name, .groups = "keep")
+  }
 }
 
 #' @export
 #' @keywords internal
 #' @inherit count
 count. <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  UseMethod("count.")
-}
-
-#' @export
-count..tidytable <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  .by <- quo(c(...))
-  count_tally(.df, {{ wt }}, sort, name, .by = !!.by, .groups = "drop")
-}
-
-#' @export
-count..grouped_tt <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  count_tally(.df, {{ wt }}, sort, name, .by = NULL, .groups = "keep")
-}
-
-#' @export
-count..data.frame <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  .df <- as_tidytable(.df)
+  deprecate_dot_fun()
   count(.df, ..., wt = {{ wt }}, sort = sort, name = name)
 }
 
@@ -82,34 +73,22 @@ count..data.frame <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
 #' @export
 #' @rdname count
 tally <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
-  tally.(.df, wt = {{ wt }}, sort = sort, name = name)
+  count_tally(.df, {{ wt }}, sort, name)
 }
 
 #' @export
 #' @keywords internal
 #' @inherit count
 tally. <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
-  UseMethod("tally.")
-}
-
-#' @export
-tally..tidytable <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
-  count_tally(.df, {{ wt }}, sort, name)
-}
-
-#' @export
-tally..data.frame <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
-  .df <- as_tidytable(.df)
-  tally(.df, wt = {{ wt }}, sort = sort, name = name)
+  deprecate_dot_fun()
+  tally(.df, {{ wt }}, sort, name)
 }
 
 count_tally <- function(.df, wt = NULL, sort = FALSE, name = NULL,
                         .by = NULL, .groups = "drop_last") {
   wt <- enquo(wt)
 
-  if (is.null(name)) {
-    name <- "n"
-  }
+  name <- name %||% "n"
 
   if (quo_is_null(wt)) {
     out <- summarize(.df, !!name := .N, .by = {{ .by }}, .groups = .groups)

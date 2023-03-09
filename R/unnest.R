@@ -40,42 +40,16 @@ unnest <- function(.df,
                    .drop = TRUE,
                    names_sep = NULL,
                    names_repair = "unique") {
-  unnest.(
-    .df, ..., keep_empty = keep_empty, .drop = .drop,
-    names_sep = names_sep, names_repair = names_repair
-  )
-}
-
-
-#' @export
-#' @keywords internal
-#' @inherit unnest
-unnest. <- function(.df,
-                    ...,
-                    keep_empty = FALSE,
-                    .drop = TRUE,
-                    names_sep = NULL,
-                    names_repair = "unique") {
-  UseMethod("unnest.")
-}
-
-#' @export
-unnest..tidytable <- function(.df,
-                              ...,
-                              keep_empty = FALSE,
-                              .drop = TRUE,
-                              names_sep = NULL,
-                              names_repair = "unique") {
-  vec_assert(.drop, logical(), 1)
+  .df <- .df_as_tidytable(.df)
 
   dots <- enquos(...)
 
   df_names <- names(.df)
 
-  .is_list <- map_lgl(.df, is.list)
+  is_list <- map_lgl(.df, is.list)
 
   if (length(dots) == 0) {
-    dots <- syms(df_names[.is_list])
+    dots <- syms(df_names[is_list])
   } else {
     dots <- tidyselect_syms(.df, ...)
   }
@@ -92,7 +66,7 @@ unnest..tidytable <- function(.df,
   }
 
   if (.drop) {
-    cols_keep <- df_names[!.is_list]
+    cols_keep <- df_names[!is_list]
   } else {
     cols_keep <- setdiff(df_names, as.character(dots))
   }
@@ -113,14 +87,17 @@ unnest..tidytable <- function(.df,
   out_df
 }
 
+
 #' @export
-unnest..data.frame <- function(.df,
-                               ...,
-                               keep_empty = FALSE,
-                               .drop = TRUE,
-                               names_sep = NULL,
-                               names_repair = "unique") {
-  .df <- as_tidytable(.df)
+#' @keywords internal
+#' @inherit unnest
+unnest. <- function(.df,
+                    ...,
+                    keep_empty = FALSE,
+                    .drop = TRUE,
+                    names_sep = NULL,
+                    names_repair = "unique") {
+  deprecate_dot_fun()
   unnest(
     .df, ..., keep_empty = keep_empty, .drop = .drop,
     names_sep = names_sep, names_repair = names_repair
@@ -154,13 +131,13 @@ unnest_col <- function(.df, col = NULL, names_sep = NULL) {
 }
 
 keep_empty_prep <- function(.l) {
-  .is_null <- vec_detect_missing(.l)
+  is_null <- vec_detect_missing(.l)
 
-  if (!any(.is_null)) {
+  if (!any(is_null)) {
     return(.l)
   }
 
-  first <- .l[!.is_null][[1]]
+  first <- .l[!is_null][[1]]
   is_vec <- is_simple_vector(first)
 
   if (is_vec) {

@@ -24,7 +24,7 @@
 #' # Experimental support for tidy evaluation
 #' add_one <- function(data, col) {
 #'   data %>%
-#'     dt(, {{ col }} := {{ col }} + 1)
+#'     dt(, new_col := {{ col }} + 1)
 #' }
 #'
 #' df %>%
@@ -37,71 +37,63 @@ dt <- function(.df, ...) {
 #' @export
 dt.tidytable <- function(.df, ...) {
   dots <- enquos(..., .unquote_names = FALSE, .ignore_empty = "none")
+
+  if (has_length(dots, 0)) return(.df)
+
   dt_env <- get_dt_env(dots)
+
   dots <- lapply(dots, quo_squash)
-  dots_names <- names(dots)
 
-  if (length(dots) > 1 || "j" %chin% dots_names) {
-    if ("j" %in% dots_names) {
-      j <- dots[["j"]]
-    } else {
-      j <- dots[[2]]
-    }
+  dt_expr <- call2("[", quo(.df), !!!dots)
 
-    if (is_call(j, c(":=", "let"))) {
-      mut_exprs <- as.list(j[-1])
-      if (length(mut_exprs) == 2 && is.null(names(mut_exprs))) {
-        col_name <- mut_exprs[[1]]
-        if (is.null(mut_exprs[[2]])) {
+  dt_expr <- call_match(dt_expr, internal_dt)
+
+  args <- call_args(dt_expr)
+
+  j <- args$j
+  if (!is.null(j)) {
+    is_mutate <- is_call(j, c(":=", "let"))
+    if (is_mutate) {
+      # Find cols mutated for `fast_copy()`
+      mutate_exprs <- call_args(j)
+      if (is_basic_mutate(mutate_exprs)) {
+        cols <- mutate_exprs[[1]]
+        if (is.null(mutate_exprs[[2]])) {
           # .df[, col := NULL]
-          col_name <- character()
-        } else if (is.symbol(col_name)) {
+          cols <- character()
+        } else if (is.symbol(cols)) {
           # .df[, x := x * 2]
-          col_name <- as.character(col_name)
+          cols <- as.character(cols)
         } else {
           # .df[, "double_x" := x * 2]
           # .df[, (new_col) := x * 2] # Note: needs dt_env
           # .df[, c("x", "y") := lapply(.SD, \(x) x + 1), .SDcols = c("x", "y")]
-          col_name <- eval_tidy(col_name, env = dt_env)
+          cols <- eval_tidy(cols, env = dt_env)
         }
-        .df <- fast_copy(.df, col_name)
       } else {
-        # .df[, let(x = 1, double_y = y * 2)]
-        use_walrus <- map_lgl(mut_exprs, is_call, ":=")
-        if (any(use_walrus)) {
-          # .df %>% dt(, let(!!col := !!col * 2))
-          j <- prep_j_expr(mut_exprs, use_walrus, ":=")
-          dots <- replace_j_dot(dots, dots_names, j)
-        }
-        col_names <- names(as.list(j[-1]))
-        .df <- fast_copy(.df, col_names)
+        # .df %>% dt(, let(x = 1, double_y = y * 2))
+        # .df %>% dt(, let(!!col := !!col * 2))
+        j <- prep_j_expr(j)
+        args$j <- j
+        cols <- call_args_names(j)
       }
+      .df <- fast_copy(.df, cols)
     } else if (is_call(j, c(".", "list"))) {
-      summarize_exprs <- as.list(j[-1])
-      use_walrus <- map_lgl(summarize_exprs, is_call, ":=")
-      if (any(use_walrus)) {
-        # .df %>% dt(, .(!!col := mean(!!col)))
-        j <- prep_j_expr(summarize_exprs, use_walrus, ".")
-        dots <- replace_j_dot(dots, dots_names, j)
-      }
+      # .df %>% dt(, .(mean_x = mean(x)))
+      # .df %>% dt(, .(!!col := mean(!!col)))
+      j <- prep_j_expr(j)
+      args$j <- j
+    }
+
+    dt_expr <- call2("[", !!!args)
+
+    # Only add empty `[` when using mutate
+    if (is_mutate) {
+      dt_expr <- call2("[", dt_expr)
     }
   }
 
-  dt_expr <- call2("[", quo(.df), !!!dots)
-
-  # Only add empty `[` when using mutate
-  if (exists("mut_exprs", current_env())) {
-    dt_expr <- call2("[", dt_expr)
-  }
-
   eval_tidy(dt_expr, env = dt_env)
-}
-
-#' @export
-dt.grouped_tt <- function(.df, ...) {
-  warn("Output is ungrouped when using `dt()` on a grouped tidytable.")
-  .df <- ungroup(.df)
-  dt(.df, ...)
 }
 
 #' @export
@@ -110,23 +102,49 @@ dt.data.frame <- function(.df, ...) {
   dt(.df, ...)
 }
 
-prep_j_expr <- function(j_exprs, use_walrus, j_call) {
-  walrus_exprs <- j_exprs[use_walrus]
-  walrus_exprs <- map(walrus_exprs, ~ as.list(.x[-1]))
-  walrus_names <- map_chr(walrus_exprs, ~ as.character(.x[[1]]))
-  walrus_exprs <- map(walrus_exprs, ~ .x[[2]])
-  j_exprs[use_walrus] <- walrus_exprs
-  names(j_exprs)[use_walrus] <- walrus_names
-
-  new_j <- call2(j_call, !!!j_exprs)
-  new_j
+# Checks if j is a single call to `:=` or let
+is_basic_mutate <- function(mutate_exprs) {
+  no_names <- !any(have_name(mutate_exprs))
+  no_walrus <- !any(map_lgl(mutate_exprs, is_call, ":="))
+  has_length(mutate_exprs, 2) && no_names && no_walrus
 }
 
-replace_j_dot <- function(dots, dots_names, j) {
-  if ("j" %in% dots_names) {
-    dots[["j"]] <- j
-  } else {
-    dots[[2]] <- j
+# Allow unquoting names in j position & allow using let
+#   Ex: df %>% dt(, let({{ col }} := {{ col }} * 2))
+#   Ex: df %>% dt(, .(!!col := mean(!!col)))
+prep_j_expr <- function(j) {
+  if (is_call(j, "let")) {
+    j[[1]] <- expr(`:=`)
   }
-  dots
+  j_call <- call_name(j)
+  j_exprs <- call_args(j)
+  use_walrus <- map_lgl(j_exprs, is_call, ":=")
+  if (any(use_walrus)) {
+    walrus_exprs <- j_exprs[use_walrus]
+    walrus_exprs <- map(walrus_exprs, ~ call_args(.x))
+    walrus_names <- map_chr(walrus_exprs, ~ as.character(.x[[1]]))
+    walrus_exprs <- map(walrus_exprs, ~ .x[[2]])
+    j_exprs[use_walrus] <- walrus_exprs
+    names(j_exprs)[use_walrus] <- walrus_names
+
+    j <- call2(j_call, !!!j_exprs)
+  }
+  j
+}
+
+# Dummy function with `[.data.table` arguments
+# For use with call_match in `dt()`
+internal_dt <- function(x, i, j, by, keyby, with = TRUE,
+                        nomatch = NA,
+                        mult = "all",
+                        roll = FALSE,
+                        rollends = if (roll=="nearest") c(TRUE,TRUE)
+                        else if (roll>=0) c(FALSE,TRUE)
+                        else c(TRUE,FALSE),
+                        which = FALSE,
+                        .SDcols,
+                        verbose = FALSE,
+                        allow.cartesian = FALSE,
+                        drop = NULL, on = NULL) {
+  abort("For internal call_match only.")
 }

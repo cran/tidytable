@@ -74,7 +74,6 @@ remove_key <- function(.df) {
   if (haskey(.df)) {
     .df <- fast_copy(.df)
     setkey(.df, NULL)
-    .df
   }
   .df
 }
@@ -129,6 +128,16 @@ f_sort <- function(x) {
   }
 }
 
+# Unpack all data frame columns
+unpack <- function(.df, .name_repair = "check_unique") {
+  # Note: df_list requires data frame inputs to be unnamed to unpack
+  out <- as.list(.df)
+  is_data_frame <- map_lgl(out, is.data.frame)
+  names(out)[is_data_frame] <- ""
+  out <- df_list(!!!out, .name_repair = .name_repair)
+  new_tidytable(out)
+}
+
 # imap implementation - for internal use only
 imap <- function(.x, .f, ...) {
   map2(.x, names(.x) %||% seq_along(.x), .f, ...)
@@ -152,18 +161,67 @@ tidytable_restore <- function(x, to) {
   vec_restore(x, to)
 }
 
+# Flatten lists - needed when `rlang::squash()` is deprecated
+list_flatten <- function(x, recursive = FALSE) {
+  is_list <- map_lgl(x, vec_is_list)
+  any_list <- any(is_list)
+  if (any_list) {
+    is_not_list <- !is_list
+    x[is_not_list] <- lapply(x[is_not_list], list)
+    out <- list_unchop(x, ptype = list())
+  } else {
+    out <- x
+  }
+
+  if (recursive && any_list) {
+    out <- list_flatten(out, recursive)
+  }
+
+  out
+}
+
 check_across <- function(dots, .fn) {
   uses_across <- any(map_lgl(dots, quo_is_call, c("across", "across.", "pick")))
 
   if (uses_across) {
-    abort(
-      glue(
-        "`across()`/`pick()` are unnecessary in `{.fn}()`.
-         Please directly use tidyselect.
-         Ex: df %>% {.fn}(where(is.numeric))"
-      )
-    )
+    msg <- glue("`across()`/`pick()` are unnecessary in `{.fn}()`.
+                Please directly use tidyselect.
+                Ex: df %>% {.fn}(where(is.numeric))")
+    abort(msg)
   }
+}
+
+# Needed until we can build S3 methods again once `verb.()` is removed
+#   Regular `as_tidytable()` strips "grouped_tt" class
+.df_as_tidytable <- function(.df) {
+  if (!is.data.frame(.df)) {
+    abort("`.df` must be a data frame.")
+  }
+
+  if (!is_tidytable(.df)) {
+    as_tidytable(.df)
+  } else {
+    .df
+  }
+}
+
+is_ungrouped <- function(.df) {
+  !is_grouped_df(.df) && !is_rowwise(.df)
+}
+
+is_rowwise <- function(.df) {
+  inherits(.df, "rowwise_tt")
+}
+
+deprecate_dot_fun <- function(fn = NULL, env = caller_env(), user_env = caller_env(2)) {
+  fn <- fn %||% call_name(caller_call())
+  what <- glue("{fn}()")
+  with <- str_replace(what, ".", "", TRUE)
+  details <- "Please note that all `verb.()` syntax has now been deprecated. \n"
+  deprecate_soft(
+    "v0.10.0", what, with, details, id = ".tidytable_dot_funs",
+    env = env, user_env = user_env
+  )
 }
 
 deprecate_old_across <- function(fn) {
