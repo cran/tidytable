@@ -32,16 +32,16 @@ Or install the development version from [GitHub](https://github.com/)
 with:
 
 ``` r
-# install.packages("devtools")
-devtools::install_github("markfairbanks/tidytable")
+# install.packages("pak")
+pak::pak("markfairbanks/tidytable")
 ```
 
 ## General syntax
 
 `tidytable` replicates `tidyverse` syntax but uses `data.table` in the
 background. In general you can simply use `library(tidytable)` to
-replace your existing `dplyr` and `tidyr` code with the faster
-`tidytable` equivalents.
+replace your existing `dplyr` and `tidyr` code with `data.table` backed
+equivalents.
 
 A full list of implemented functions can be found
 [here](https://markfairbanks.github.io/tidytable/reference/index.html).
