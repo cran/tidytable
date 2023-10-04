@@ -1,7 +1,7 @@
-27c3b2bdcbe06c24a84861c33151994b *DESCRIPTION
+1bfc969bccfc8f7d7175e43e170b5636 *DESCRIPTION
 a819e4eb2ea0d730d2ed2e195f166957 *LICENSE
 0eb31c570fccda4c1b93fd322f979a29 *NAMESPACE
-787330455d8fe11f0fcc49d1e3ba0d82 *NEWS.md
+7725e6e88bae5b87e231bb5f292cc04f *NEWS.md
 f83e1b6d33d9c2ccef4f281646a5b3a0 *R/across.R
 071128a3a5e85251cbfbc9cc1b555fb6 *R/add_count.R
 b335ba35a0edf876b2e7d2d6b9d5d2ca *R/arrange.R
@@ -90,11 +90,11 @@ fc5c8d839d3c596ae31b334c056d5123 *R/transmute.R
 5abca5d9db25fed412accb33e96db14a *R/uncount.R
 80afd69fcecf0dc33161fcdbcc27783e *R/unite.R
 663f7b9dad17ee6992be78f069b9b650 *R/unnest.R
-deeeaa00517b11517c783fe714111962 *R/unnest_longer.R
-d37b795a2d8b9af0e6835cf835d4a7b2 *R/unnest_wider.R
+dba04fb2e673a6a226af28e52e7a52d3 *R/unnest_longer.R
+8d8cb7532c4c911a26c52e993879b8d3 *R/unnest_wider.R
 078109e7a2a88ed0eb56dfe0ea782d3e *R/utils-across.R
 5f85dc7bb8dea5c6cc04f82332b42275 *R/utils-fast_copy.R
-60f34c08959d1d3c22c8b984774c77e2 *R/utils-general.R
+7fe72c73bb3c84632987472b8cfed5fa *R/utils-general.R
 65cef5e0674056f6fc07dd2b3ca85c13 *R/utils-pipe.R
 f5a4673af108e9ce829ac645eb0edc1b *R/utils-prep_exprs.R
 e1a6d42f8dc1c99acee4f49975f40200 *R/utils-stringr.R
