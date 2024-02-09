@@ -26,8 +26,7 @@
 #' )
 #' coalesce(!!!vecs)
 coalesce <- function(..., .ptype = NULL, .size = NULL) {
-  args <- list2(...)
-  args <- vec_cast_common(!!!args, .to = .ptype)
+  args <- vec_cast_common(..., .to = .ptype)
 
   out <- do.call(fcoalesce, args)
 
@@ -38,10 +37,3 @@ coalesce <- function(..., .ptype = NULL, .size = NULL) {
   out
 }
 
-#' @export
-#' @keywords internal
-#' @inherit coalesce
-coalesce. <- function(..., .ptype = NULL, .size = NULL) {
-  deprecate_dot_fun()
-  coalesce(..., .ptype = .ptype, .size = .size)
-}

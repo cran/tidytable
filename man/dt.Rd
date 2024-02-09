@@ -9,14 +9,14 @@ dt(.df, ...)
 \arguments{
 \item{.df}{A data.frame or data.table}
 
-\item{...}{Arguments passed to data.table call. See ?data.table::\verb{[.data.table}}
+\item{...}{Arguments passed to data.table call. See \code{?data.table::`[.data.table` }}
 }
 \description{
 Pipeable data.table call.
 
-Has \emph{experimental} support for tidy evaluation.
+This function does not use data.table's modify-by-reference.
 
-Note: This function does not use data.table's modify-by-reference
+Has experimental support for tidy evaluation for custom functions.
 }
 \examples{
 df <- tidytable(
@@ -29,7 +29,7 @@ df \%>\%
   dt(, double_x := x * 2) \%>\%
   dt(order(-double_x))
 
-# Experimental support for tidy evaluation
+# Experimental support for tidy evaluation for custom functions
 add_one <- function(data, col) {
   data \%>\%
     dt(, new_col := {{ col }} + 1)

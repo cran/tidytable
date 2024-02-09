@@ -40,8 +40,16 @@ unnest <- function(.df,
                    .drop = TRUE,
                    names_sep = NULL,
                    names_repair = "unique") {
-  .df <- .df_as_tidytable(.df)
+  UseMethod("unnest")
+}
 
+#' @export
+unnest.tidytable <- function(.df,
+                             ...,
+                             keep_empty = FALSE,
+                             .drop = TRUE,
+                             names_sep = NULL,
+                             names_repair = "unique") {
   dots <- enquos(...)
 
   df_names <- names(.df)
@@ -89,15 +97,13 @@ unnest <- function(.df,
 
 
 #' @export
-#' @keywords internal
-#' @inherit unnest
-unnest. <- function(.df,
+unnest.data.frame <- function(.df,
                     ...,
                     keep_empty = FALSE,
                     .drop = TRUE,
                     names_sep = NULL,
                     names_repair = "unique") {
-  deprecate_dot_fun()
+  .df <- as_tidytable(.df)
   unnest(
     .df, ..., keep_empty = keep_empty, .drop = .drop,
     names_sep = names_sep, names_repair = names_repair
@@ -130,23 +136,24 @@ unnest_col <- function(.df, col = NULL, names_sep = NULL) {
   out_df
 }
 
-keep_empty_prep <- function(.l) {
-  is_null <- vec_detect_missing(.l)
+keep_empty_prep <- function(l) {
+  # Need to catch cases with both length 0 vectors and NULLs
+  is_empty <- list_sizes(l) == 0
 
-  if (!any(is_null)) {
-    return(.l)
+  if (!any(is_empty)) {
+    return(l)
   }
 
-  first <- .l[!is_null][[1]]
+  first <- l[!is_empty][[1]]
   is_vec <- is_simple_vector(first)
 
   if (is_vec) {
-    .replace <- NA
+    l[is_empty] <- list(NA)
   } else {
     null_df <- vec_init(first, 1)
 
-    .replace <- list(null_df)
+    l[is_empty] <- list(null_df)
   }
 
-  replace_na(.l, .replace)
+  l
 }

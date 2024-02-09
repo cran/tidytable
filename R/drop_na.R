@@ -24,24 +24,23 @@
 #' df %>%
 #'   drop_na(where(is.numeric))
 drop_na <- function(.df, ...) {
-  .df <- .df_as_tidytable(.df)
+  UseMethod("drop_na")
+}
 
-  dots <- enquos(...)
-
-  if (length(dots) == 0) {
+#' @export
+drop_na.tidytable <- function(.df, ...) {
+  if (missing(...)) {
     na.omit(.df)
   } else {
-    drop_cols <- tidyselect_locs(.df, ...)
+    cols <- tidyselect_locs(.df, ...)
 
-    na.omit(.df, cols = drop_cols)
+    na.omit(.df, cols = cols)
   }
 }
 
 #' @export
-#' @keywords internal
-#' @inherit drop_na
-drop_na. <- function(.df, ...) {
-  deprecate_dot_fun()
+drop_na.data.frame <- function(.df, ...) {
+  .df <- as_tidytable(.df)
   drop_na(.df, ...)
 }
 

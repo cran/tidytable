@@ -51,21 +51,25 @@
 #'   group_by(x) %>%
 #'   tally()
 count <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  .df <- .df_as_tidytable(.df)
-
-  if (is_ungrouped(.df)) {
-    .by <- quo(c(...))
-    count_tally(.df, {{ wt }}, sort, name, .by = !!.by, .groups = "keep")
-  } else {
-    count_tally(.df, {{ wt }}, sort, name, .groups = "keep")
-  }
+  UseMethod("count")
 }
 
 #' @export
-#' @keywords internal
-#' @inherit count
-count. <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
-  deprecate_dot_fun()
+count.tidytable <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  check_no_across(enquos(...))
+  .by <- quo(c(...))
+  count_tally(.df, {{ wt }}, sort, name, .by = !!.by, .groups = "keep")
+}
+
+#' @export
+count.grouped_tt <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  check_no_across(enquos(...))
+  count_tally(.df, {{ wt }}, sort, name, .groups = "keep")
+}
+
+#' @export
+count.data.frame <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
+  .df <- as_tidytable(.df)
   count(.df, ..., wt = {{ wt }}, sort = sort, name = name)
 }
 
@@ -74,14 +78,6 @@ count. <- function(.df, ..., wt = NULL, sort = FALSE, name = NULL) {
 #' @rdname count
 tally <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
   count_tally(.df, {{ wt }}, sort, name)
-}
-
-#' @export
-#' @keywords internal
-#' @inherit count
-tally. <- function(.df, wt = NULL, sort = FALSE, name = NULL) {
-  deprecate_dot_fun()
-  tally(.df, {{ wt }}, sort, name)
 }
 
 count_tally <- function(.df, wt = NULL, sort = FALSE, name = NULL,
