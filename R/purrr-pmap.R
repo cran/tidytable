@@ -5,11 +5,17 @@
 pmap <- function(.l, .f, ...) {
   .f <- as_function(.f)
   args <- .args_recycle(.l)
-  do.call("mapply", c(
+  out <- do.call("mapply", c(
     FUN = list(quote(.f)),
     args, MoreArgs = quote(list(...)),
     SIMPLIFY = FALSE, USE.NAMES = FALSE
   ))
+  if (obj_is_list(args)) {
+    if (is_named(args[[1]])) {
+      names(out) <- names(args[[1]])
+    }
+  }
+  out
 }
 
 #' @export
@@ -62,12 +68,11 @@ pmap_vec <- function(.l, .f, ..., .ptype = NULL) {
 }
 
 .args_recycle <- function(args) {
-  lengths <- map_int(args, length)
-  n <- max(lengths)
+  args <- as.list(args)
+  sizes <- list_sizes(args)
+  n <- max(sizes)
 
-  stopifnot(all(lengths == 1L | lengths == n))
-  to_recycle <- lengths == 1L
-  args[to_recycle] <- map(args[to_recycle], function(x) rep.int(x, n))
+  args <- map(args, vec_recycle, n)
 
   args
 }

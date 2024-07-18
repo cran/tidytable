@@ -1,8 +1,6 @@
 # dt starting with the j position
 dt_j <- function(.df, j, ...) {
-  j <- enquo(j)
-  i <- new_quosure(expr(), get_env(j))
-  dt(.df, !!i, !!j, ...)
+  dt(.df, , {{ j }}, ...)
 }
 
 # Create a call to `[.data.table` (j position)
@@ -39,6 +37,8 @@ call2_i_by <- function(.df, i, .by) {
   j <- expr(.I[!!i])
   dt_expr <- call2_j(.df, j, .by)
   dt_expr <- call2("$", dt_expr, expr(V1))
+  # Properly handle NA equality, #812
+  dt_expr <- call2("replace_na", dt_expr, expr(FALSE), .ns = "tidytable")
   dt_expr <- call2_i(.df, dt_expr)
   dt_expr
 }
@@ -99,16 +99,15 @@ get_dt_env <- function(x, ...) {
     }
   }
 
-  env(dt_env, ...)
+  env(dt_env, ..., .datatable.aware = TRUE)
 }
 
 tidytable_class <- function() {
-  c("tidytable", "data.table", "data.frame")
+  c("tidytable", "tbl", "data.table", "data.frame")
 }
 
 # radix sort
 # Proxy for data.table::fsort since negative values aren't supported, #282
-# Can switch to data.table::fsort once negative doubles are handled
 # See: https://github.com/Rdatatable/data.table/issues/5051
 f_sort <- function(x) {
   if (is.character(x)) {
