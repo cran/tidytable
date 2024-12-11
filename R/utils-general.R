@@ -8,10 +8,8 @@ call2_j <- function(.df, j = NULL, .by = NULL, .keyby = FALSE, ...) {
   .df <- enquo(.df)
   if (length(.by) == 0) {
     dt_expr <- call2("[", .df, expr(), j, ...)
-  } else if (.keyby) {
-    dt_expr <- call2("[", .df, expr(), j, keyby = .by, ...)
   } else {
-    dt_expr <- call2("[", .df, expr(), j, by = .by, ...)
+    dt_expr <- call2("[", .df, expr(), j, by = .by, keyby = .keyby, ...)
   }
 
   if (is_call(j, c(":=", "let"))) {
@@ -38,7 +36,7 @@ call2_i_by <- function(.df, i, .by) {
   dt_expr <- call2_j(.df, j, .by)
   dt_expr <- call2("$", dt_expr, expr(V1))
   # Properly handle NA equality, #812
-  dt_expr <- call2("replace_na", dt_expr, expr(FALSE), .ns = "tidytable")
+  dt_expr <- call2("na.omit", dt_expr)
   dt_expr <- call2_i(.df, dt_expr)
   dt_expr
 }

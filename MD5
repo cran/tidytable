@@ -1,7 +1,7 @@
-a32a3f3681c37a3ce849ac565182d562 *DESCRIPTION
+19eec5db36c84decb9f3ff0f0fe2f9ec *DESCRIPTION
 a819e4eb2ea0d730d2ed2e195f166957 *LICENSE
 ab5831e0174b8e9062e3e8c6c3233c7c *NAMESPACE
-4ad83538ea51816c6f1287ecdcf49ff8 *NEWS.md
+559a9da1bbfa3cd700255a7dd00ea01e *NEWS.md
 d8d9060224189a30c405ce585a06485a *R/across.R
 a179a5dfa9a1ee8f0d7b2455949344d8 *R/add_count.R
 ddecf178efdd80a45bf1d5c07f764d0e *R/arrange.R
@@ -9,7 +9,7 @@ f994b6a2bb0f067996982b379d56b894 *R/as_tidytable.R
 4c21bf9dfc4a8affca16f78b94f6af92 *R/between.R
 a6e6cb0e1425ef705b34b9a5dc6e136c *R/bind.R
 172ed2ea3e8b0a2e1fffc6f3fa7be88c *R/c_across.R
-9501837abaf6a829aec68796b1b4e67c *R/case.R
+e6cca82da21cc43ea3d2ba4bdc5f1589 *R/case.R
 9663ef5bdc45cab6d7ae2948c2801cb0 *R/case_match.R
 7c65edb1f11c72823945c4505f61cb0f *R/case_when.R
 1700623c43b74ca66f12493598ac374e *R/coalesce.R
@@ -22,7 +22,7 @@ b7b424a15abbc1e12d3593c7763ec372 *R/cur-context.R
 6525431b4ed70f26260eca706826d2a3 *R/desc.R
 9456aab6d8aa9535f952152981b5e3af *R/distinct.R
 06dfc7828c9a6d58724caf9109c49f8b *R/drop_na.R
-20c9155176429f2d56ae0835ce04bd90 *R/dt.R
+9af501aeec94c70eb91acfb573b456b1 *R/dt.R
 e3172f5d1f688f45face0dfdb371b6e8 *R/enframe.R
 4f3ba43ade3f896f316d6f74907ef4e6 *R/expand.R
 798bdef6934d30fad1d63e374c29a56d *R/expand_grid.R
@@ -91,7 +91,7 @@ f65244abca71b699fd6c3c8512de387d *R/unnest.R
 6e62c84addc2a5477eec6c219077ca18 *R/unnest_wider.R
 8745e72fd02f15064a91e14a55994e5f *R/utils-across.R
 340d9126909c97227727dbf652aae957 *R/utils-fast_copy.R
-f2960df2c0741982e35d72d2204d31d6 *R/utils-general.R
+10f2b8dcd0d8fd9264d6cc6f9b86b3be *R/utils-general.R
 65cef5e0674056f6fc07dd2b3ca85c13 *R/utils-pipe.R
 5da58b8c8d826bc8fe6c0117b0ffb0e3 *R/utils-prep_exprs.R
 e1a6d42f8dc1c99acee4f49975f40200 *R/utils-stringr.R
@@ -203,7 +203,7 @@ e7dc2a5142c52a1830915145c9936d0d *tests/testthat/test-consecutive_id.R
 7c877be7b47e583383ea0c368ba5aa5c *tests/testthat/test-deprec-across.R
 67a072ec2abe100ebb63fb394e48d85e *tests/testthat/test-distinct.R
 34d5b24746aa11d07216af57279589c1 *tests/testthat/test-drop_na.R
-b912558882abcfaba2f995e567d28e30 *tests/testthat/test-dt.R
+27c73032fad1d23d2eae586cd2ef24a8 *tests/testthat/test-dt.R
 7ba480d99df2faba9bd4f80fba7f72a7 *tests/testthat/test-enframe.R
 6b6943bd4ee479e17b406dea941859df *tests/testthat/test-expand.R
 00a37ece618c72ef97286a55349ded50 *tests/testthat/test-expand_grid.R
